@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Auth, User, browserLocalPersistence, OAuthProvider, onAuthStateChanged, setPersistence, signInWithEmailAndPassword,
-  signInWithPopup, signOut, createUserWithEmailAndPassword, updateProfile} from 'firebase/auth';
+  signInWithPopup, signOut, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail} from 'firebase/auth';
 import { firebaseAuth } from '../config/firebase.config';
 import { environment } from '../../../environment/environment';
 
@@ -77,6 +77,42 @@ export class AuthService {
       this.loading.set(false);
     }
   }
+
+  /** true cuando el correo de recuperación ya se envió (o "se hizo como que se envió") */
+  passwordResetSent = signal(false);
+
+  async sendPasswordReset(email: string): Promise<void> {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.passwordResetSent.set(false);
+    try {
+      await sendPasswordResetEmail(this.auth, email);
+      this.passwordResetSent.set(true);
+    } catch (error) {
+      const code = (error as { code?: string })?.code ?? '';
+      if (code === 'auth/user-not-found') {
+        // Por seguridad, no le decimos al usuario si el correo existe o no
+        // en la base de datos (evita que alguien "adivine" correos registrados).
+        this.passwordResetSent.set(true);
+      } else {
+        this.errorMessage.set(this.traducirErrorRecuperacion(error));
+      }
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+private traducirErrorRecuperacion(error: unknown): string {
+  const code = (error as { code?: string })?.code ?? '';
+  switch (code) {
+    case 'auth/invalid-email':
+      return 'El correo no tiene un formato válido.';
+    case 'auth/too-many-requests':
+      return 'Demasiados intentos. Espera un momento e inténtalo de nuevo.';
+    default:
+      return 'No pudimos enviar el correo de recuperación. Intenta de nuevo.';
+  }
+}
 
   async logout(): Promise<void> {
     await signOut(this.auth);
