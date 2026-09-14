@@ -1,0 +1,46 @@
+.available-surveys-container {
+  max-width: 720px;
+}
+
+.survey-card {
+  border-radius: 16px;
+  background-color: #ffffff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0px 8px 24px rgba(13, 27, 62, 0.1) !important;
+  }
+}
+
+// Estados 
+.badge-disponible {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.badge-pendiente {
+  background-color: #FDEDED;
+  color: var(--color-primary);
+}
+
+.badge-completado {
+  background-color: #52B42C;
+  color: #ffffff;
+}
+
+// Botones
+.btn-brand {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+
+  &:hover {
+    background-color: var(--color-primary-dark);
+    color: #ffffff;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}

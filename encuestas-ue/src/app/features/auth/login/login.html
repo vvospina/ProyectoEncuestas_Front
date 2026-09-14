@@ -1,0 +1,104 @@
+<main class="login-page d-flex align-items-center justify-content-center">
+  <div class="w-100" style="max-width: 480px">
+    <header class="login-header text-center mb-4">
+      <img src="/img/logo-uniempresarial-2.png" alt="Uniempresarial" class="login-logo" />
+    </header>
+
+    <section class="card login-card shadow-sm" aria-labelledby="login-heading">
+      <div class="card-body p-4 p-md-5">
+        <h1 id="login-heading" class="h4 text-center mb-4">Iniciar sesión</h1>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="mb-3">
+            <label for="email" class="form-label text-uppercase small fw-bold text-muted">
+              Correo electrónico
+            </label>
+            <div class="input-icon-group">
+              <i class="bi bi-envelope input-icon" aria-hidden="true"></i>
+              <input
+                id="email"
+                type="email"
+                class="form-control"
+                formControlName="email"
+                placeholder="usuario@ejemplo.com"
+                [class.is-invalid]="form.controls.email.invalid && form.controls.email.touched"
+              />
+            </div>
+            @if (form.controls.email.invalid && form.controls.email.touched) {
+              <p class="invalid-feedback d-block">Escribe un correo válido.</p>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label text-uppercase small fw-bold text-muted">
+              Contraseña
+            </label>
+            <div class="input-icon-group">
+              <i class="bi bi-lock input-icon" aria-hidden="true"></i>
+              <input
+                [type]="mostrarPassword() ? 'text' : 'password'"
+                id="password"
+                class="form-control"
+                formControlName="password"
+                placeholder="••••••••"
+                [class.is-invalid]="form.controls.password.invalid && form.controls.password.touched"
+              />
+              <button
+                type="button"
+                class="btn-toggle-password"
+                (click)="alternarPassword()"
+                [attr.aria-label]="mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              >
+                <i class="bi" [class.bi-eye]="!mostrarPassword()" [class.bi-eye-slash]="mostrarPassword()" aria-hidden="true"></i>
+              </button>
+            </div>
+            @if (form.controls.password.invalid && form.controls.password.touched) {
+              <p class="invalid-feedback d-block">Mínimo 6 caracteres.</p>
+            }
+          </div>
+
+          @if (auth.errorMessage()) {
+            <p class="alert alert-danger py-2" role="alert">{{ auth.errorMessage() }}</p>
+          }
+
+          <button
+            type="submit"
+            class="btn btn-primary w-100 mb-3 text-uppercase fw-bold"
+            [disabled]="auth.loading()"
+          >
+            @if (auth.loading()) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            Iniciar sesión
+          </button>
+        </form>
+
+        <p class="login-divider my-4"><span>o</span></p>
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary w-100 btn-microsoft text-uppercase fw-bold"
+          (click)="loginConMicrosoft()"
+          [disabled]="auth.loading()"
+        >
+          <svg class="ms-logo" viewBox="0 0 21 21" width="18" height="18" aria-hidden="true">
+            <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+            <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+            <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+            <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+          </svg>
+          Iniciar sesión con Microsoft
+        </button>
+
+        <p class="text-center mt-4 mb-0">
+          <a href="#" class="small forgot-password-link">¿Olvidaste tu contraseña?</a>
+        </p>
+
+        <p class="text-center mt-2 mb-0">
+          ¿No tienes cuenta?
+          <a routerLink="/register" class="forgot-password-link">Regístrate</a>
+        </p>
+      </div>
+    </section>
+  </div>
+</main>

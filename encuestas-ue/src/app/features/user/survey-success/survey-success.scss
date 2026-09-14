@@ -1,0 +1,121 @@
+:host {
+  display: block;
+}
+
+.survey-success-page {
+  min-height: 100dvh;
+  padding: 2rem 1rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: var(--color-bg);
+}
+
+.success-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 2.5rem 2rem;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: 0 0.25rem 1.25rem rgba(19, 32, 62, 0.08);
+}
+
+.success-icon {
+  width: 4.5rem;
+  height: 4.5rem;
+  margin-bottom: 1.25rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  background-color: #eafaf0;
+
+  font-size: 2.25rem;
+  color: var(--color-success);
+}
+
+.success-card h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+}
+
+.success-subtitle {
+  margin: 0 0 1.5rem;
+  color: var(--color-muted);
+}
+
+.success-summary {
+  width: 100%;
+  margin: 0 0 2rem;
+  padding: 1rem 1.25rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  background-color: var(--color-bg);
+  border-radius: 0.6rem;
+  text-align: left;
+}
+
+.success-summary__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.success-summary__row dt {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.success-summary__row dd {
+  margin: 0;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.back-button {
+  width: 100%;
+  padding: 0.85rem;
+
+  display: block;
+  border-radius: 999px;
+
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+
+  font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-align: center;
+
+  transition: background-color 0.2s ease;
+}
+
+.back-button:hover {
+  background-color: var(--color-primary-dark);
+}
+
+@media (max-width: 380px) {
+  .success-card {
+    padding: 2rem 1.25rem;
+  }
+}

@@ -1,0 +1,199 @@
+<div class="surveys-page">
+
+  <header class="surveys-header">
+
+    <div>
+      <h1>Encuestas</h1>
+
+      <p>
+        Gestiona las encuestas creadas en la plataforma.
+      </p>
+    </div>
+
+    <a
+      routerLink="/admin/surveys/create"
+      class="create-button"
+    >
+      <i class="bi bi-plus-lg"></i>
+      <span>Crear encuesta</span>
+    </a>
+
+  </header>
+
+
+  <main class="surveys-content">
+
+    <section class="filters-card">
+
+      <div class="search-field">
+
+        <i class="bi bi-search"></i>
+
+        <input
+          type="search"
+          placeholder="Buscar encuesta o profesor..."
+          [value]="searchTerm()"
+          (input)="updateSearch($event)"
+        />
+
+      </div>
+
+
+      <div class="status-field">
+
+        <label for="survey-status">
+          Estado
+        </label>
+
+        <select
+          id="survey-status"
+          [value]="selectedStatus()"
+          (change)="updateStatus($event)"
+        >
+          <option value="TODOS">Todos</option>
+          <option value="ACTIVA">Activas</option>
+          <option value="BORRADOR">Borradores</option>
+          <option value="CERRADA">Cerradas</option>
+        </select>
+
+      </div>
+
+    </section>
+
+
+    <section class="surveys-list">
+
+      <div class="list-header">
+
+        <h2>
+          Mis encuestas
+        </h2>
+
+        <span>
+          {{ filteredSurveys().length }}
+          {{ filteredSurveys().length === 1 ? 'encuesta' : 'encuestas' }}
+        </span>
+
+      </div>
+
+
+      @if (filteredSurveys().length > 0) {
+
+        @for (survey of filteredSurveys(); track survey.id) {
+
+          <article class="survey-card">
+
+            <div class="survey-card__main">
+
+              <div class="survey-card__title-row">
+
+                <h3>
+                  {{ survey.name }}
+                </h3>
+
+                <span
+                  class="status"
+                  [class.status--active]="survey.status === 'ACTIVA'"
+                  [class.status--draft]="survey.status === 'BORRADOR'"
+                  [class.status--closed]="survey.status === 'CERRADA'"
+                >
+                  {{ survey.status }}
+                </span>
+
+              </div>
+
+
+              <p class="survey-description">
+                {{ survey.description }}
+              </p>
+
+
+              <div class="survey-meta">
+
+                <span>
+                  <i class="bi bi-person"></i>
+                  {{ survey.teacher }}
+                </span>
+
+                <span>
+                  <i class="bi bi-list-check"></i>
+                  {{ survey.questions }}
+                  {{ survey.questions === 1 ? 'pregunta' : 'preguntas' }}
+                </span>
+
+                <span>
+                  <i class="bi bi-calendar3"></i>
+                  {{ survey.createdAt }}
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div class="survey-card__actions">
+
+              <button
+                type="button"
+                class="action-button"
+              >
+                <i class="bi bi-eye"></i>
+                <span>Ver</span>
+              </button>
+
+
+              <button
+                type="button"
+                class="action-button"
+              >
+                <i class="bi bi-pencil"></i>
+                <span>Editar</span>
+              </button>
+
+
+              <button
+                type="button"
+                class="action-button"
+              >
+                <i class="bi bi-bar-chart"></i>
+                <span>Resultados</span>
+              </button>
+
+            </div>
+
+          </article>
+
+        }
+
+      } @else {
+
+        <div class="empty-state">
+
+          <div class="empty-state__icon">
+            <i class="bi bi-clipboard-x"></i>
+          </div>
+
+          <h3>
+            No encontramos encuestas
+          </h3>
+
+          <p>
+            Intenta cambiar los filtros o crea una nueva encuesta.
+          </p>
+
+          <a
+            routerLink="/admin/surveys/create"
+            class="empty-state__button"
+          >
+            Crear encuesta
+          </a>
+
+        </div>
+
+      }
+
+    </section>
+
+  </main>
+
+</div>

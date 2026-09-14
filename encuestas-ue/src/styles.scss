@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import "bootstrap/scss/bootstrap";
+
+:root {
+  --color-primary: #D32F2F;
+  --color-primary-dark: #B71C1C;
+  --color-secondary: #0E3EBA;
+  --color-secondary-dark: #083399;
+  --color-success: #57D100;
+  --color-success-dark: #479E00;
+  --color-danger: #EE282B;
+  --color-danger-dark: #C91C1C;
+  --color-bg: #EAEDFF;
+  --color-surface: #FFFFFF;
+  --color-text: #1F2937;
+  --color-muted: #6B7280;
+  --color-neutral: #13203E;
+  --color-border: #CBD5E1;
+
+  --font-heading: 'DM Sans', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --radius-md: 0.75rem;
+}
+
+$color-primary: #00298c;
+$color-red-brand: #EE282B;
+$color-bg-surface: #E8E8ED;
+$color-text-main: #0d1a38;
+$color-text-muted: #747685;
+$color-card-bg: #ffffff;
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  background-color: $color-bg-surface;
+  color: $color-text-main;
+  font-family: 'Hanken Grotesk', 'DM Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+a {
+  text-decoration: none;
+}
+
+/* --------------------------------------------------------------------------
+   ESTILOS DE VALE
+   -------------------------------------------------------------------------- */
+.btn-primary {
+  --bs-btn-bg: var(--color-primary);
+  --bs-btn-border-color: var(--color-primary);
+  --bs-btn-hover-bg: var(--color-primary-dark);
+  --bs-btn-hover-border-color: var(--color-primary-dark);
+  --bs-btn-active-bg: var(--color-primary-dark);
+}
+
+.card {
+  border-radius: var(--radius-md);
+}
+
+.form-control:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+  COMPONENTES Y CLASES 
+   -------------------------------------------------------------------------- */
+.survey-card {
+  background-color: $color-card-bg;
+  border-radius: 24px;
+  box-shadow: 0px 4px 20px rgba(19, 32, 62, 0.08);
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: 0px 8px 30px rgba(19, 32, 62, 0.12);
+  }
+}
+
+.btn-rounded-custom {
+  border-radius: 50px;
+  padding: 12px 32px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}

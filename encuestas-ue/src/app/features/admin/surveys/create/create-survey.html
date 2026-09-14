@@ -1,0 +1,625 @@
+<div class="create-survey">
+
+  <!-- ================================
+       ENCABEZADO
+  ================================= -->
+
+  <header class="page-header">
+
+    <div>
+
+      <span class="page-header__eyebrow">
+        Gestión de encuestas
+      </span>
+
+      <h1>Crear encuesta</h1>
+
+      <p>
+        Configura la información y las preguntas de la encuesta.
+      </p>
+
+    </div>
+
+  </header>
+
+
+  <form
+    class="survey-form"
+    [formGroup]="surveyForm"
+    (ngSubmit)="save()">
+
+
+    <!-- ================================
+         INFORMACIÓN GENERAL
+    ================================= -->
+
+    <section class="form-card">
+
+      <div class="section-header">
+
+        <div>
+
+          <h2>Información general</h2>
+
+          <p>
+            Define los datos principales de la encuesta.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="form-grid">
+
+        <!-- TÍTULO -->
+
+        <div class="form-field form-field--full">
+
+          <label for="title">
+            Título de la encuesta
+            <span class="required">*</span>
+          </label>
+
+          <input
+            id="title"
+            type="text"
+            formControlName="title"
+            placeholder="Ej. Evaluación docente semestre 2026-2"
+            autocomplete="off"
+          />
+
+          <div class="field-meta">
+
+            <span>
+              {{ surveyForm.controls.title.value.length }}/150
+            </span>
+
+          </div>
+
+          @if (
+            surveyForm.controls.title.touched &&
+            surveyForm.controls.title.hasError('required')
+          ) {
+
+            <span class="field-error">
+              El título es obligatorio.
+            </span>
+
+          }
+
+          @if (
+            surveyForm.controls.title.touched &&
+            surveyForm.controls.title.hasError('minlength')
+          ) {
+
+            <span class="field-error">
+              El título debe tener al menos 5 caracteres.
+            </span>
+
+          }
+
+          @if (
+            surveyForm.controls.title.touched &&
+            surveyForm.controls.title.hasError('maxlength')
+          ) {
+
+            <span class="field-error">
+              El título no puede superar los 150 caracteres.
+            </span>
+
+          }
+
+        </div>
+
+
+        <!-- DOCENTE -->
+
+        <div class="form-field">
+
+          <label for="teacher">
+            Docente
+            <span class="required">*</span>
+          </label>
+
+          <select
+            id="teacher"
+            formControlName="teacherId">
+
+            <option value="">
+              Selecciona un docente
+            </option>
+
+            @for (teacher of teachers; track teacher.id) {
+
+              <option [value]="teacher.id">
+                {{ teacher.name }}
+              </option>
+
+            }
+
+          </select>
+
+          @if (
+            surveyForm.controls.teacherId.touched &&
+            surveyForm.controls.teacherId.hasError('required')
+          ) {
+
+            <span class="field-error">
+              Debes seleccionar un docente.
+            </span>
+
+          }
+
+        </div>
+
+
+        <!-- ESCALA -->
+
+        <div class="form-field">
+
+          <label>
+            Escala de respuesta
+          </label>
+
+          <div class="scale-info">
+
+            <span class="scale-info__value">
+              1
+            </span>
+
+            <span class="scale-info__separator">
+              →
+            </span>
+
+            <span class="scale-info__value">
+              5
+            </span>
+
+            <span class="scale-info__text">
+              Escala estandarizada
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ================================
+         PREGUNTAS
+    ================================= -->
+
+    <section class="form-card">
+
+      <div class="section-header">
+
+        <div>
+
+          <h2>Preguntas</h2>
+
+          <p>
+            Agrega las preguntas que responderán los estudiantes.
+            Todas utilizan una escala de 1 a 5.
+          </p>
+
+        </div>
+
+        <div class="question-count">
+
+          <strong>
+            {{ questions.length }}
+          </strong>
+
+          <span>
+            {{ questions.length === 1 ? 'pregunta' : 'preguntas' }}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div
+        class="questions"
+        formArrayName="questions">
+
+
+        @for (
+          question of questions.controls;
+          track question;
+          let i = $index
+        ) {
+
+          <article
+            class="question-card"
+            [formGroupName]="i">
+
+
+            <!-- CABECERA DE PREGUNTA -->
+
+            <div class="question-card__header">
+
+              <div class="question-number">
+                {{ i + 1 }}
+              </div>
+
+              <div class="question-card__title">
+
+                <strong>
+                  Pregunta {{ i + 1 }}
+                </strong>
+
+                <span>
+                  Escala de valoración 1–5
+                </span>
+
+              </div>
+
+
+              @if (questions.length > 1) {
+
+                <button
+                  type="button"
+                  class="delete-button"
+                  (click)="removeQuestion(i)">
+
+                  Eliminar
+
+                </button>
+
+              }
+
+            </div>
+
+
+            <!-- TEXTO -->
+
+            <div class="form-field">
+
+              <label [for]="'question-' + i">
+
+                Texto de la pregunta
+
+                <span class="required">*</span>
+
+              </label>
+
+              <textarea
+                [id]="'question-' + i"
+                rows="3"
+                formControlName="text"
+                maxlength="500"
+                placeholder="Ej. El docente explica claramente los temas de la asignatura."
+              ></textarea>
+
+
+              <div class="field-meta">
+
+                <span>
+                  {{ getQuestionText(i).length }}/500
+                </span>
+
+              </div>
+
+
+              @if (isQuestionInvalid(i)) {
+
+                @if (
+                  question.get('text')?.hasError('required')
+                ) {
+
+                  <span class="field-error">
+                    La pregunta es obligatoria.
+                  </span>
+
+                }
+
+                @if (
+                  question.get('text')?.hasError('minlength')
+                ) {
+
+                  <span class="field-error">
+                    La pregunta debe tener al menos 5 caracteres.
+                  </span>
+
+                }
+
+              }
+
+            </div>
+
+
+            <!-- ESCALA -->
+
+            <div class="question-scale">
+
+              <span class="question-scale__label">
+                Respuesta del estudiante
+              </span>
+
+              <div class="scale-options">
+
+                @for (
+                  value of [1, 2, 3, 4, 5];
+                  track value
+                ) {
+
+                  <div class="scale-option">
+
+                    <span class="scale-option__number">
+                      {{ value }}
+                    </span>
+
+                    @switch (value) {
+
+                      @case (1) {
+                        <span class="scale-option__text">
+                          Muy baja
+                        </span>
+                      }
+
+                      @case (2) {
+                        <span class="scale-option__text">
+                          Baja
+                        </span>
+                      }
+
+                      @case (3) {
+                        <span class="scale-option__text">
+                          Neutral
+                        </span>
+                      }
+
+                      @case (4) {
+                        <span class="scale-option__text">
+                          Alta
+                        </span>
+                      }
+
+                      @case (5) {
+                        <span class="scale-option__text">
+                          Muy alta
+                        </span>
+                      }
+
+                    }
+
+                  </div>
+
+                }
+
+              </div>
+
+            </div>
+
+          </article>
+
+        }
+
+      </div>
+
+
+      <!-- AGREGAR -->
+
+      <button
+        type="button"
+        class="add-question-button"
+        (click)="addQuestion()">
+
+        <span class="add-question-button__icon">
+          +
+        </span>
+
+        <span>
+          Agregar pregunta
+        </span>
+
+      </button>
+
+    </section>
+
+
+    <!-- ================================
+         VISTA PREVIA
+    ================================= -->
+
+    <section class="form-card">
+
+      <div class="section-header">
+
+        <div>
+
+          <h2>Vista previa</h2>
+
+          <p>
+            Así se presentará la encuesta al estudiante.
+          </p>
+
+        </div>
+
+        <span class="preview-badge">
+          Vista previa
+        </span>
+
+      </div>
+
+
+      <div class="preview">
+
+        <!-- HEADER -->
+
+        <div class="preview__header">
+
+          <span class="preview__type">
+            ENCUESTA ACADÉMICA
+          </span>
+
+          <h3>
+            {{
+              surveyForm.controls.title.value ||
+              'Título de la encuesta'
+            }}
+          </h3>
+
+          <div class="preview__teacher">
+
+            <span>
+              Docente:
+            </span>
+
+            <strong>
+              {{ getTeacherName() }}
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- PREGUNTAS -->
+
+        <div class="preview__questions">
+
+          @for (
+            question of questions.controls;
+            track question;
+            let i = $index
+          ) {
+
+            <div class="preview-question">
+
+              <div class="preview-question__number">
+                {{ i + 1 }}
+              </div>
+
+              <div class="preview-question__content">
+
+                <p>
+
+                  {{
+                    question.get('text')?.value ||
+                    'Aquí aparecerá la pregunta...'
+                  }}
+
+                </p>
+
+
+                <div class="preview-scale">
+
+                  @for (
+                    value of [1, 2, 3, 4, 5];
+                    track value
+                  ) {
+
+                    <label class="preview-scale__item">
+
+                      <input
+                        type="radio"
+                        [name]="'preview-question-' + i"
+                      />
+
+                      <span>
+                        {{ value }}
+                      </span>
+
+                    </label>
+
+                  }
+
+                </div>
+
+                <div class="preview-scale__labels">
+
+                  <span>
+                    Muy baja
+                  </span>
+
+                  <span>
+                    Muy alta
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          }
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ================================
+         ÉXITO
+    ================================= -->
+
+    @if (saved()) {
+
+      <div
+        class="success-message"
+        role="status">
+
+        <strong>
+          Encuesta creada correctamente.
+        </strong>
+
+        <span>
+          La encuesta está lista para ser guardada en el sistema.
+        </span>
+
+      </div>
+
+    }
+
+
+    <!-- ================================
+         ACCIONES
+    ================================= -->
+
+    <div class="form-actions">
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="cancel()"
+        [disabled]="saving()">
+
+        Cancelar
+
+      </button>
+
+
+      <button
+        type="submit"
+        class="primary-button"
+        [disabled]="saving()">
+
+        @if (saving()) {
+
+          <span>
+            Guardando...
+          </span>
+
+        } @else {
+
+          <span>
+            Guardar encuesta
+          </span>
+
+        }
+
+      </button>
+
+    </div>
+
+  </form>
+
+</div>

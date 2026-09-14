@@ -1,0 +1,113 @@
+.login-page {
+  min-height: 100dvh; /* alto real disponible para responsividad */
+  background-color: var(--color-bg);
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.login-logo {
+  height: 15rem;
+  object-fit: contain;
+}
+
+.login-card {
+  border: none;
+}
+
+.input-icon-group {
+  position: relative;
+
+  .input-icon {
+    position: absolute;
+    top: 50%;
+    left: 0.9rem;
+    transform: translateY(-50%);
+    color: var(--color-muted);
+    pointer-events: none; /* para que el clic pase al input, no al ícono */
+  }
+
+  .form-control {
+    padding-left: 2.5rem; /* deja espacio para que el ícono no tape el texto */
+  }
+
+  .btn-toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--color-muted);
+    padding: 0;
+    line-height: 1;
+
+    &:hover {
+      color: var(--color-secondary);
+    }
+  }
+
+  .form-control:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 0.2rem rgba(14, 62, 186, 0.15);
+  }
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  margin: 0;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  span {
+    padding: 0 0.75rem;
+  }
+}
+
+.btn-microsoft {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.ms-logo {
+  flex-shrink: 0;
+}
+
+.forgot-password-link {
+  color: var(--color-primary);
+
+  &:hover {
+    color: var(--color-primary-dark);
+  }
+}
+
+/* Responsividad */
+@media (max-height: 720px) {
+  .login-logo {
+    height: 3.5rem;
+  }
+
+  .login-header {
+    margin-bottom: 1rem;
+  }
+
+  .login-card .card-body {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .login-divider {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+}

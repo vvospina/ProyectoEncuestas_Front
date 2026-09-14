@@ -1,0 +1,134 @@
+/* Fuentes cargadas globalmente desde index.html:
+   - Hanken Grotesk (títulos)
+   - Inter (cuerpo)
+   - Material Symbols Outlined (íconos)
+*/
+
+
+:host {
+  display: block;
+}
+
+/* ─── Página ─────────────────────────────────────────────── */
+.session-closed-page {
+  min-height: 100dvh;
+  padding: 1.5rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #E8E8ED;          /* fondo gris del Stitch */
+}
+
+/* ─── Tarjeta ─────────────────────────────────────────────── */
+.session-closed-card {
+  width: 100%;
+  max-width: 500px;
+  padding: 4rem 2.5rem;               /* xl = 64px */
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  background-color: #ffffff;          /* surface-container-lowest */
+  border-radius: 24px;                /* rounded-3xl del Stitch */
+  box-shadow: 0 4px 20px rgba(19, 32, 62, 0.08);
+
+  transition: box-shadow 0.3s ease;
+}
+
+.session-closed-card:hover {
+  box-shadow: 0 8px 30px rgba(19, 32, 62, 0.12);
+}
+
+/* ─── Ícono ─────────────────────────────────────────────── */
+.session-closed-icon {
+  width: 5rem;
+  height: 5rem;
+  margin-bottom: 2rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  background-color: rgba(228, 31, 37, 0.08);   /* primary-container/10 */
+}
+
+.session-closed-icon .material-symbols-outlined {
+  font-size: 2.5rem;
+  color: #bb0014;                     /* primary del design system */
+  font-variation-settings: 'FILL' 1;  /* ícono relleno */
+}
+
+/* ─── Título ─────────────────────────────────────────────── */
+.session-closed-card h1 {
+  margin: 0 0 1.5rem;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 1.5rem;                  /* headline-md: 24px */
+  font-weight: 700;
+  line-height: 2rem;
+  letter-spacing: -0.01em;
+  color: #0d1a38;                     /* on-surface */
+}
+
+@media (min-width: 640px) {
+  .session-closed-card h1 {
+    font-size: 2rem;                  /* headline-lg: 32px */
+    line-height: 2.5rem;
+  }
+}
+
+/* ─── Subtítulo ──────────────────────────────────────────── */
+.session-closed-subtitle {
+  margin: 0 0 2.5rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;                    /* body-md: 16px */
+  font-weight: 400;
+  line-height: 1.5rem;
+  color: #5d3f3c;                     /* on-surface-variant */
+  max-width: 24rem;
+}
+
+/* ─── Botón ──────────────────────────────────────────────── */
+.back-to-login-button {
+  width: 100%;
+  padding: 1rem 2rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9999px;              /* pill */
+  background-color: #bb0014;          /* primary */
+  color: #ffffff;                     /* on-primary */
+
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;                 /* label-caps: 12px */
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: none;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.back-to-login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(187, 0, 20, 0.35);
+}
+
+.back-to-login-button:active {
+  transform: scale(0.97);
+}
+
+/* ─── Responsive pequeño ─────────────────────────────────── */
+@media (max-width: 400px) {
+  .session-closed-card {
+    padding: 2.5rem 1.5rem;
+  }
+}

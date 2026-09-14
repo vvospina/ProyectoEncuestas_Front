@@ -1,0 +1,136 @@
+<main class="auth-page d-flex align-items-center justify-content-center">
+  <div class="w-100" style="max-width: 480px">
+    <header class="auth-header text-center mb-4">
+      <img src="/img/logo-uniempresarial-2.png" alt="Uniempresarial" class="auth-logo" />
+    </header>
+
+    <section class="card auth-card shadow-sm" aria-labelledby="register-heading">
+      <div class="card-body p-4 p-md-5">
+        <h1 id="register-heading" class="h4 text-center mb-4">Crear cuenta</h1>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label for="nombre" class="form-label text-uppercase small fw-bold text-muted">Nombre</label>
+              <input
+                id="nombre"
+                type="text"
+                class="form-control"
+                formControlName="nombre"
+                placeholder="Zullie"
+                [class.is-invalid]="form.controls.nombre.invalid && form.controls.nombre.touched"
+              />
+              @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+                <p class="invalid-feedback d-block">Escribe tu nombre.</p>
+              }
+            </div>
+
+            <div class="col-6">
+              <label for="apellido" class="form-label text-uppercase small fw-bold text-muted">Apellido</label>
+              <input
+                id="apellido"
+                type="text"
+                class="form-control"
+                formControlName="apellido"
+                placeholder="Diaz"
+                [class.is-invalid]="form.controls.apellido.invalid && form.controls.apellido.touched"
+              />
+              @if (form.controls.apellido.invalid && form.controls.apellido.touched) {
+                <p class="invalid-feedback d-block">Escribe tu apellido.</p>
+              }
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="email" class="form-label text-uppercase small fw-bold text-muted">Correo electrónico</label>
+            <div class="input-icon-group">
+              <i class="bi bi-envelope input-icon" aria-hidden="true"></i>
+              <input
+                id="email"
+                type="email"
+                class="form-control"
+                formControlName="email"
+                placeholder="usuario@ejemplo.com"
+                [class.is-invalid]="form.controls.email.invalid && form.controls.email.touched"
+              />
+            </div>
+            @if (form.controls.email.invalid && form.controls.email.touched) {
+              <p class="invalid-feedback d-block">Escribe un correo válido.</p>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label text-uppercase small fw-bold text-muted">Contraseña</label>
+            <div class="input-icon-group">
+              <i class="bi bi-lock input-icon" aria-hidden="true"></i>
+              <input
+                [type]="mostrarPassword() ? 'text' : 'password'"
+                id="password"
+                class="form-control"
+                formControlName="password"
+                placeholder="••••••••"
+                [class.is-invalid]="form.controls.password.invalid && form.controls.password.touched"
+              />
+              <button
+                type="button"
+                class="btn-toggle-password"
+                (click)="alternarPassword()"
+                [attr.aria-label]="mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              >
+                <i class="bi" [class.bi-eye]="!mostrarPassword()" [class.bi-eye-slash]="mostrarPassword()" aria-hidden="true"></i>
+              </button>
+            </div>
+            @if (form.controls.password.invalid && form.controls.password.touched) {
+              <p class="invalid-feedback d-block">Mínimo 6 caracteres.</p>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label for="confirmarPassword" class="form-label text-uppercase small fw-bold text-muted">Confirmar contraseña</label>
+            <div class="input-icon-group">
+              <i class="bi bi-lock input-icon" aria-hidden="true"></i>
+              <input
+                [type]="mostrarConfirmarPassword() ? 'text' : 'password'"
+                id="confirmarPassword"
+                class="form-control"
+                formControlName="confirmarPassword"
+                placeholder="••••••••"
+                [class.is-invalid]="confirmarPasswordTieneError"
+              />
+              <button
+                type="button"
+                class="btn-toggle-password"
+                (click)="alternarConfirmarPassword()"
+                [attr.aria-label]="mostrarConfirmarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              >
+                <i class="bi" [class.bi-eye]="!mostrarConfirmarPassword()" [class.bi-eye-slash]="mostrarConfirmarPassword()" aria-hidden="true"></i>
+              </button>
+            </div>
+            @if (form.controls.confirmarPassword.touched && form.controls.confirmarPassword.hasError('required')) {
+              <p class="invalid-feedback d-block">Confirma tu contraseña.</p>
+            }
+            @if (confirmarPasswordTieneError && !form.controls.confirmarPassword.hasError('required')) {
+              <p class="invalid-feedback d-block">Las contraseñas no coinciden.</p>
+            }
+          </div>
+
+          @if (auth.errorMessage()) {
+            <p class="alert alert-danger py-2" role="alert">{{ auth.errorMessage() }}</p>
+          }
+
+          <button type="submit" class="btn btn-primary w-100 mb-3 text-uppercase fw-bold" [disabled]="auth.loading()">
+            @if (auth.loading()) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            Crear cuenta
+          </button>
+        </form>
+
+        <p class="text-center mt-4 mb-0">
+          ¿Ya tienes cuenta?
+          <a routerLink="/login" class="auth-link">Inicia sesión</a>
+        </p>
+      </div>
+    </section>
+  </div>
+</main>

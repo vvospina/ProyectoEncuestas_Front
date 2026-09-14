@@ -1,0 +1,62 @@
+<main class="container py-4 available-surveys-container">
+  <header class="mb-4">
+    <h1 class="fs-2 fw-bold text-dark mb-1">Encuestas Disponibles</h1>
+    <p class="text-muted fs-6">
+      Revisa las evaluaciones pendientes y complétalas antes de la fecha límite.
+    </p>
+  </header>
+
+  <!-- Lista de Tarjetas -->
+  <div class="d-flex flex-column gap-3">
+    <article
+      *ngFor="let encuesta of encuestas"
+      class="card survey-card p-4 border-0 shadow-sm"
+      [class.opacity-75]="encuesta.completada">
+
+      <!-- Top Card: Título + Estado -->
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <h2 class="fs-5 fw-bold text-dark mb-1">{{ encuesta.titulo }}</h2>
+          <p class="text-muted small d-flex align-items-center gap-1 mb-0">
+            <span class="material-symbols-outlined fs-6">{{ encuesta.iconoSubtitulo }}</span>
+            {{ encuesta.subtitulo }}
+          </p>
+        </div>
+        <span class="badge rounded-pill uppercase px-3 py-2" [ngClass]="obtenerClaseBadge(encuesta.estado)">
+          {{ encuesta.estado }}
+        </span>
+      </div>
+
+      <!-- Descripción -->
+      <p class="text-secondary small my-2">
+        {{ encuesta.descripcion }}
+      </p>
+
+      <!-- Footer -->
+      <div class="d-flex justify-content-between align-items-center text-muted border-top pt-3 my-2 small">
+        <span class="d-flex align-items-center gap-1">
+          <span class="material-symbols-outlined fs-6">format_list_numbered</span>
+          Preguntas: {{ encuesta.totalPreguntas }}
+        </span>
+        <span class="d-flex align-items-center gap-1" [class.text-primary]="!encuesta.completada">
+          <span class="material-symbols-outlined fs-6">
+            {{ encuesta.completada ? 'check_circle' : 'calendar_today' }}
+          </span>
+          {{ encuesta.fechaTexto }}
+        </span>
+      </div>
+
+      <!-- Botón  -->
+      <button
+        type="button"
+        class="btn w-100 fw-bold uppercase py-2 mt-2"
+        [ngClass]="encuesta.completada ? 'btn-outline-secondary disabled' : 'btn-brand'"
+        [disabled]="encuesta.completada"
+        (click)="responderEncuesta(encuesta.id)">
+        {{ encuesta.completada ? 'ENCUESTA ENVIADA' : 'RESPONDER ENCUESTA' }}
+      </button>
+
+    </article>
+  </div>
+
+</main>

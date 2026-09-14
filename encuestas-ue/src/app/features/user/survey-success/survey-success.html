@@ -1,0 +1,23 @@
+<main class="survey-success-page">
+  <section class="success-card" aria-labelledby="success-heading">
+    <div class="success-icon" aria-hidden="true">
+      <i class="bi bi-check-circle-fill"></i>
+    </div>
+
+    <h1 id="success-heading">¡Encuesta completada!</h1>
+    <p class="success-subtitle">Tus respuestas fueron registradas correctamente.</p>
+
+    <dl class="success-summary">
+      <div class="success-summary__row">
+        <dt><i class="bi bi-person" aria-hidden="true"></i> Profesor evaluado</dt>
+        <dd>{{ teacherName }}</dd>
+      </div>
+      <div class="success-summary__row">
+        <dt><i class="bi bi-list-check" aria-hidden="true"></i> Preguntas respondidas</dt>
+        <dd>{{ answeredQuestions }} de {{ totalQuestions }}</dd>
+      </div>
+    </dl>
+
+    <a routerLink="/user/available-surveys" class="back-button">Volver a encuestas</a>
+  </section>
+</main>

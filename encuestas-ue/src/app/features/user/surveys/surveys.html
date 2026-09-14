@@ -1,0 +1,69 @@
+<main class="container py-5 survey-container">
+
+  <section class="mb-4 text-center text-md-start">
+    <h1 class="text-primary fw-bold">{{ encuesta.titulo }}</h1>
+    <p class="fs-5 text-muted">Profesor: {{ encuesta.profesor.nombre }}</p>
+  </section>
+
+  <!-- Progreso -->
+  <section class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span class="text-uppercase fw-bold text-muted fs-7">Progreso</span>
+      <span class="fw-bold text-primary fs-7">
+        Pregunta {{ numeroPreguntaVisual }} de {{ encuesta.preguntas.length }}
+      </span>
+    </div>
+    <div class="progress progress-custom">
+      <div class="progress-bar progress-bar-brand"
+           role="progressbar"
+           [style.width.%]="progresoPorcentaje">
+      </div>
+    </div>
+  </section>
+
+  <!-- Tarjeta de Pregunta -->
+  <section class="survey-card p-4 p-md-5 mb-4">
+    <h2 class="fs-4 fw-semibold text-dark mb-5 text-center">
+      {{ numeroPreguntaVisual }}. {{ encuesta.preguntas[indicePreguntaActual].texto }}
+    </h2>
+
+    <div class="d-flex flex-column align-items-center">
+      <div class="d-flex justify-content-between w-100 position-relative rating-wrapper">
+        <div class="rating-line"></div>
+
+        <div *ngFor="let opcion of opcionesCalificacion" class="position-relative z-1">
+          <button
+            type="button"
+            class="btn rounded-circle btn-rating"
+            [class.active]="respuestaSeleccionada === opcion"
+            (click)="seleccionarCalificacion(opcion)">
+            {{ opcion }}
+          </button>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between w-100 mt-3 text-muted small rating-wrapper">
+        <span class="text-center label-text">1 - Muy en desacuerdo</span>
+        <span class="text-center label-text">5 - Muy de acuerdo</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navegación -->
+  <section class="d-flex flex-column flex-md-row justify-content-between gap-3 mt-4">
+    <button
+      class="btn btn-outline-primary btn-rounded-custom w-100 w-md-auto"
+      (click)="anterior()"
+      [disabled]="esPrimeraPregunta">
+      ANTERIOR
+    </button>
+
+    <button
+      class="btn btn-brand btn-rounded-custom w-100 w-md-auto text-white shadow"
+      (click)="siguienteOFinalizar()"
+      [disabled]="!respuestaSeleccionada">
+      {{ esUltimaPregunta ? 'FINALIZAR' : 'SIGUIENTE' }}
+    </button>
+  </section>
+
+</main>
