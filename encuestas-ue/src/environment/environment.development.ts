@@ -1,5 +1,3 @@
-import { initializeApp } from "firebase/app";
-
 export const environment = {
   production: false,
   devForceRole: 'ADMIN', // Cambia a 'USER' o quítalo según necesites 
@@ -14,5 +12,3 @@ export const environment = {
   }
 };
 
-// Inicialización opcional si inicializas Firebase en el archivo de environment
-export const app = initializeApp(environment.firebaseConfig);

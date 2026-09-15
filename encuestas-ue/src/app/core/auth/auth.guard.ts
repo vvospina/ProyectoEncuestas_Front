@@ -12,10 +12,7 @@ import { environment } from '../../../environment/environment';
  * La seguridad real debe validarse también en Node.js con el
  * middleware.
  */
-export const authGuard: CanActivateFn = () => {
-
-  // Bypass temporal para poder revisar pantallas mientras llegan las
-  // credenciales reales de Firebase. Ver environment.development.ts
+export const authGuard: CanActivateFn = async () => {
   if (!environment.production && environment.bypassAuthForDev) {
     return true;
   }
@@ -23,10 +20,12 @@ export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (auth.currentUser()) {
+  await auth.authReadyPromise; // sigue sirviendo para el caso de recargar la página
+
+  if (auth.tieneSesionActiva()) { // antes: auth.currentUser()
     return true;
   }
-  
+
   router.navigate(['/login']);
   return false;
 };

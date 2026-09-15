@@ -1,0 +1,99 @@
+:host { display: block; }
+
+.profile-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.profile-header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: var(--color-text);
+}
+
+.profile-card {
+  padding: 2rem;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: 0 0.25rem 1.25rem rgba(19, 32, 62, 0.06);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.profile-photo {
+  width: 6rem;
+  height: 6rem;
+  margin-bottom: 1.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-photo--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg);
+  color: var(--color-muted);
+  font-size: 2.5rem;
+}
+
+.profile-fields {
+  width: 100%;
+  text-align: left;
+}
+
+.profile-fields__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.profile-fields__row dt {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.profile-fields__row dd {
+  margin: 0;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.role-badge {
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background-color: var(--color-bg);
+  color: var(--color-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.role-badge--admin {
+  background-color: #fdecea;
+  color: var(--color-primary);
+}
+
+.profile-error__icon {
+  font-size: 2.5rem;
+  color: var(--color-muted);
+}

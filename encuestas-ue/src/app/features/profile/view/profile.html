@@ -1,0 +1,55 @@
+<div class="profile-page">
+  @if (!auth.authReady()) {
+    <div class="profile-loading text-center py-5">
+      <span class="spinner-border" role="status"></span>
+      <p class="text-muted mt-3">Cargando tu perfil...</p>
+    </div>
+  } @else if (!auth.currentUser()) {
+    <div class="profile-error text-center py-5">
+      <i class="bi bi-exclamation-circle profile-error__icon"></i>
+      <h2 class="h5 mt-3">No pudimos cargar tu perfil</h2>
+      <p class="text-muted">No encontramos una sesión activa.</p>
+      <a routerLink="/login" class="btn btn-primary">Iniciar sesión</a>
+    </div>
+  } @else {
+    <header class="profile-header">
+      <h1>Mi perfil</h1>
+      <a routerLink="/profile/edit" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-pencil"></i> Editar perfil
+      </a>
+    </header>
+
+    <section class="profile-card">
+      @if (auth.photoBase64()) {
+        <img [src]="auth.photoBase64()!" alt="Foto de perfil" class="profile-photo" />
+      } @else {
+        <div class="profile-photo profile-photo--placeholder">
+          <i class="bi bi-person-fill"></i>
+        </div>
+      }
+
+      <dl class="profile-fields">
+        <div class="profile-fields__row">
+          <dt>Nombre</dt>
+          <dd>{{ nombre() }}</dd>
+        </div>
+        <div class="profile-fields__row">
+          <dt>Apellido</dt>
+          <dd>{{ apellido() }}</dd>
+        </div>
+        <div class="profile-fields__row">
+          <dt>Correo</dt>
+          <dd>{{ auth.currentUser()?.email }}</dd>
+        </div>
+        <div class="profile-fields__row">
+          <dt>Rol</dt>
+          <dd>
+            <span class="role-badge" [class.role-badge--admin]="auth.userRole() === 'ADMIN'">
+                {{ auth.userRole() === 'ADMIN' ? 'Administrador' : 'Usuario' }}
+            </span>
+          </dd>
+        </div>
+      </dl>
+    </section>
+  }
+</div>

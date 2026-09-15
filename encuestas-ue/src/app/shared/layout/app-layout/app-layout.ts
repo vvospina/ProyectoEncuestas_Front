@@ -21,6 +21,10 @@ export class AppLayout {
     private readonly router: Router,
   ) {}
 
+  get profilePath(): string {
+    return this.isAdminSection ? '/admin/profile' : '/user/profile';
+  }
+  
   get isAdminSection(): boolean {
     return this.router.url.startsWith('/admin');
   }

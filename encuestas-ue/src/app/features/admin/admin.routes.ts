@@ -3,6 +3,14 @@ import { Routes } from '@angular/router';
 export const ADMIN_ROUTES: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
   {
+    path: 'profile',
+    loadComponent: () => import('../profile/view/profile').then((m) => m.ProfileComponent),
+  },
+  {
+    path: 'profile/edit',
+    loadComponent: () => import('../profile/edit/profile-edit').then((m) => m.ProfileEditComponent),
+  },
+  {
     path: 'dashboard',
     loadComponent: () =>
       import('./dashboard/dashboard').then((m) => m.Dashboard),

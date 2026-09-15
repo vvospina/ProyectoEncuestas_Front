@@ -4,32 +4,81 @@ import { Auth, User, browserLocalPersistence, OAuthProvider, onAuthStateChanged,
   signInWithPopup, signOut, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail} from 'firebase/auth';
 import { firebaseAuth } from '../config/firebase.config';
 import { environment } from '../../../environment/environment';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { firestoreDb } from '../config/firebase.config';
 
-/**
-  AuthService = el "encargado" de todo lo relacionado a sesión de usuario.
-  Ningún componente debe hablar con Firebase directamente: siempre pasa por aquí.*/
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private auth: Auth = firebaseAuth;
 
-  /**
-   * "signal" = una cajita reactiva: cuando su valor cambia, todo lo
-   * que la usa en el HTML se actualiza solo, sin que tengamos que
-   * escribir código para refrescar la pantalla.
-   */
   currentUser = signal<User | null>(null);
   errorMessage = signal<string | null>(null);
+  photoBase64 = signal<string | null>(null);
   loading = signal(false);
+  
+  // 1. Declaración de las signals faltantes
+  authReady = signal<boolean>(false);
+  profileUpdateSuccess = signal<boolean>(false);
+  passwordResetSent = signal(false);
+  userRole = signal<'ADMIN' | 'USER' | null>(null);
 
   constructor(private router: Router) {
-    // Esto se ejecuta automáticamente cada vez que Firebase detecta
-    // que el usuario inició o cerró sesión (incluso al recargar la página).
-    onAuthStateChanged(this.auth, (user) => {
+    onAuthStateChanged(this.auth, async (user) => {
       this.currentUser.set(user);
+      await this.actualizarRol(user);
+      await this.cargarFotoPerfil(user);
+      this.authReady.set(true);
+      this.resolverAuthReady();
     });
   }
 
-  /** Login con correo y contraseña (formulario clásico) */
+  // 2. Método wrapper para actualizar la signal del rol cuando cambia el Auth State
+  private async actualizarRol(user: User | null): Promise<void> {
+    if (!user) {
+      this.userRole.set(null);
+      return;
+    }
+    const rol = await this.obtenerRol();
+    this.userRole.set(rol);
+  }
+  private resolverAuthReady!: () => void;
+  readonly authReadyPromise = new Promise<void>((resolve) => {
+    this.resolverAuthReady = resolve;
+  });
+
+  private async cargarFotoPerfil(user: User | null): Promise<void> {
+    if (!user) {
+      this.photoBase64.set(null);
+      return;
+    }
+    const snapshot = await getDoc(doc(firestoreDb, 'users', user.uid));
+    this.photoBase64.set(snapshot.exists() ? (snapshot.data()['photoBase64'] ?? null) : null);
+  }
+
+  async updateUserProfile(nombre: string, apellido: string, fotoBase64?: string): Promise<void> {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.profileUpdateSuccess.set(false);
+    try {
+      const user = this.auth.currentUser;
+      if (!user) throw new Error('No hay usuario autenticado.');
+
+      await updateProfile(user, { displayName: `${nombre} ${apellido}`.trim() });
+
+      if (fotoBase64) {
+        await setDoc(doc(firestoreDb, 'users', user.uid), { photoBase64: fotoBase64 }, { merge: true });
+        this.photoBase64.set(fotoBase64);
+      }
+
+      this.currentUser.set(user);
+      this.profileUpdateSuccess.set(true);
+    } catch {
+      this.errorMessage.set('No pudimos actualizar tu perfil. Intenta de nuevo.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   async loginWithEmail(email: string, password: string): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
@@ -44,7 +93,6 @@ export class AuthService {
     }
   }
 
-  /** Login con el botón "Iniciar sesión con Microsoft" */
   async loginWithMicrosoft(): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
@@ -62,7 +110,6 @@ export class AuthService {
     }
   }
 
-  /** Crea una cuenta nueva con correo y contraseña, y guarda el nombre completo */
   async registerWithEmail(nombre: string, apellido: string, email: string, password: string): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
@@ -78,9 +125,6 @@ export class AuthService {
     }
   }
 
-  /** true cuando el correo de recuperación ya se envió (o "se hizo como que se envió") */
-  passwordResetSent = signal(false);
-
   async sendPasswordReset(email: string): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
@@ -91,8 +135,6 @@ export class AuthService {
     } catch (error) {
       const code = (error as { code?: string })?.code ?? '';
       if (code === 'auth/user-not-found') {
-        // Por seguridad, no le decimos al usuario si el correo existe o no
-        // en la base de datos (evita que alguien "adivine" correos registrados).
         this.passwordResetSent.set(true);
       } else {
         this.errorMessage.set(this.traducirErrorRecuperacion(error));
@@ -102,31 +144,30 @@ export class AuthService {
     }
   }
 
-private traducirErrorRecuperacion(error: unknown): string {
-  const code = (error as { code?: string })?.code ?? '';
-  switch (code) {
-    case 'auth/invalid-email':
-      return 'El correo no tiene un formato válido.';
-    case 'auth/too-many-requests':
-      return 'Demasiados intentos. Espera un momento e inténtalo de nuevo.';
-    default:
-      return 'No pudimos enviar el correo de recuperación. Intenta de nuevo.';
+  private traducirErrorRecuperacion(error: unknown): string {
+    const code = (error as { code?: string })?.code ?? '';
+    switch (code) {
+      case 'auth/invalid-email':
+        return 'El correo no tiene un formato válido.';
+      case 'auth/too-many-requests':
+        return 'Demasiados intentos. Espera un momento e inténtalo de nuevo.';
+      default:
+        return 'No pudimos enviar el correo de recuperación. Intenta de nuevo.';
+    }
   }
-}
 
   async logout(): Promise<void> {
     await signOut(this.auth);
     this.router.navigate(['/session-closed']);
   }
 
-  /**
-   * Este es el token que Angular debe mandar en cada petición al
-   * backend (header "Authorization: Bearer <token>"). Node.js lo
-   * valida con el SDK de Firebase Admin (ver punto F01 del PDF).
-   */
   async getIdToken(): Promise<string | null> {
     const user = this.auth.currentUser;
     return user ? user.getIdToken() : null;
+  }
+  /** Revisa el estado real de Firebase al instante, sin depender del signal. */
+  tieneSesionActiva(): boolean {
+    return !!this.auth.currentUser;
   }
 
   private async afterLogin(): Promise<void> {
@@ -140,22 +181,16 @@ private traducirErrorRecuperacion(error: unknown): string {
   }
 
   private async obtenerRol(): Promise<'ADMIN' | 'USER'> {
-    // 1. SOLO desarrollo: fuerza un rol mientras no haya backend/claims reales.
-    //    Ver environment.development.ts -> devForceRole.
     if (!environment.production && environment.devForceRole) {
       return environment.devForceRole as 'ADMIN' | 'USER';
     }
 
-    // 2. Rol real: viene como "custom claim" dentro del token de Firebase.
-    //    Alguien con el SDK de administrador (Node.js) debe asignarlo
-    //    al crear el usuario (ver F01 del documento del reto).
     const tokenResult = await this.auth.currentUser?.getIdTokenResult();
     const rol = tokenResult?.claims['role'];
 
     return rol === 'ADMIN' ? 'ADMIN' : 'USER';
   }
 
-  /** Convierte los códigos de error de Firebase en mensajes entendibles */
   private traducirError(error: unknown): string {
     const code = (error as { code?: string })?.code ?? '';
     switch (code) {
@@ -173,16 +208,16 @@ private traducirErrorRecuperacion(error: unknown): string {
   }
 
   private traducirErrorRegistro(error: unknown): string {
-  const code = (error as { code?: string })?.code ?? '';
-  switch (code) {
-    case 'auth/email-already-in-use':
-      return 'Ya existe una cuenta con este correo.';
-    case 'auth/invalid-email':
-      return 'El correo no tiene un formato válido.';
-    case 'auth/weak-password':
-      return 'La contraseña debe tener al menos 6 caracteres.';
-    default:
-      return 'No pudimos crear la cuenta. Intenta de nuevo.';
+    const code = (error as { code?: string })?.code ?? '';
+    switch (code) {
+      case 'auth/email-already-in-use':
+        return 'Ya existe una cuenta con este correo.';
+      case 'auth/invalid-email':
+        return 'El correo no tiene un formato válido.';
+      case 'auth/weak-password':
+        return 'La contraseña debe tener al menos 6 caracteres.';
+      default:
+        return 'No pudimos crear la cuenta. Intenta de nuevo.';
+    }
   }
-}
 }

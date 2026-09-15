@@ -120,6 +120,15 @@
 
     <!-- FOOTER -->
     <div class="sidebar__footer">
+      <a
+        [routerLink]="profilePath"
+        routerLinkActive="nav-item--active"
+        class="nav-item"
+        (click)="closeSidebar()">
+
+        <span class="nav-item__icon">◍</span>
+        <span>Mi perfil</span>
+      </a>
 
       <button
         type="button"

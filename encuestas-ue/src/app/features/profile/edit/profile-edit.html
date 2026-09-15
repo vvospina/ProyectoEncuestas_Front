@@ -1,0 +1,70 @@
+<div class="profile-edit-page">
+  <header class="profile-header">
+    <h1>Editar perfil</h1>
+    <a routerLink="/profile" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+  </header>
+
+  <section class="profile-card">
+    <form (ngSubmit)="submit()" [formGroup]="form" novalidate>
+      <div class="photo-field">
+        @if (previewFoto()) {
+        <img [src]="previewFoto()" alt="Vista previa de la foto" class="profile-photo" />
+        } @else if (auth.photoBase64()) {
+        <img [src]="auth.photoBase64()!" alt="Foto actual" class="profile-photo" />
+        } @else {
+        <div class="profile-photo profile-photo--placeholder">
+            <i class="bi bi-person-fill"></i>
+        </div>
+        }
+
+        <label class="photo-upload-button">
+          <i class="bi bi-camera"></i> Cambiar foto
+          <input type="file" accept="image/*" (change)="onFotoSeleccionada($event)" hidden />
+        </label>
+      </div>
+
+      <div class="mb-3">
+        <label for="nombre" class="form-label text-uppercase small fw-bold text-muted">Nombre</label>
+        <input
+          id="nombre"
+          type="text"
+          class="form-control"
+          formControlName="nombre"
+          [class.is-invalid]="form.controls.nombre.invalid && form.controls.nombre.touched"
+        />
+        @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+          <p class="invalid-feedback d-block">Escribe tu nombre.</p>
+        }
+      </div>
+
+      <div class="mb-3">
+        <label for="apellido" class="form-label text-uppercase small fw-bold text-muted">Apellido</label>
+        <input
+          id="apellido"
+          type="text"
+          class="form-control"
+          formControlName="apellido"
+          [class.is-invalid]="form.controls.apellido.invalid && form.controls.apellido.touched"
+        />
+        @if (form.controls.apellido.invalid && form.controls.apellido.touched) {
+          <p class="invalid-feedback d-block">Escribe tu apellido.</p>
+        }
+      </div>
+
+      @if (auth.errorMessage()) {
+        <p class="alert alert-danger py-2" role="alert">{{ auth.errorMessage() }}</p>
+      }
+
+      @if (auth.profileUpdateSuccess()) {
+        <p class="alert alert-success py-2" role="status">Perfil actualizado correctamente.</p>
+      }
+
+      <button type="submit" class="btn btn-primary w-100 text-uppercase fw-bold" [disabled]="auth.loading()">
+        @if (auth.loading()) {
+          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        }
+        Guardar cambios
+      </button>
+    </form>
+  </section>
+</div>
