@@ -96,3 +96,42 @@ a {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+
+/* --------------------------------------------------------------------------
+   ESTADOS GENÉRICOS (loading / error) — reutilizables en cualquier pantalla
+   -------------------------------------------------------------------------- */
+.state-block {
+  padding: 3rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.state-block i {
+  font-size: 1.6rem;
+  color: var(--color-muted);
+  margin-bottom: 0.75rem;
+}
+
+.state-block p {
+  margin: 0 0 1rem;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.state-block--loading i {
+  animation: spin 1s linear infinite;
+}
+
+.state-block--error i {
+  color: var(--color-danger);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

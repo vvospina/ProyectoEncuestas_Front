@@ -153,6 +153,27 @@
 
         </div>
 
+        <!-- TIPO DE ENCUESTA -->
+        <div class="form-field">
+          <label for="tipoEncuesta">
+            Tipo de encuesta
+            <span class="required">*</span>
+          </label>
+
+          <select id="tipoEncuesta" formControlName="tipoEncuesta">
+            <option value="">Selecciona un tipo</option>
+            @for (tipo of tiposEncuesta; track tipo.value) {
+              <option [value]="tipo.value">{{ tipo.label }}</option>
+            }
+          </select>
+
+          @if (
+            surveyForm.controls.tipoEncuesta.touched &&
+            surveyForm.controls.tipoEncuesta.hasError('required')
+          ) {
+            <span class="field-error">Debes seleccionar un tipo de encuesta.</span>
+          }
+        </div>
 
         <!-- ESCALA -->
 
@@ -577,6 +598,12 @@
 
       </div>
 
+    }
+    @if (errorMessage()) {
+      <div class="error-message" role="alert">
+        <strong>No se pudo guardar la encuesta.</strong>
+        <span>{{ errorMessage() }}</span>
+      </div>
     }
 
 

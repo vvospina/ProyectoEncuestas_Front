@@ -487,6 +487,23 @@
   font-size: 12px;
 }
 
+.error-message {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 13px;
+}
+
+.error-message span {
+  color: #dc2626;
+  font-size: 12px;
+}
 
 /* ================================
    ACCIONES

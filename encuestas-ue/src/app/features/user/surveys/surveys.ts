@@ -24,6 +24,7 @@ export class SurveysComponent implements OnInit {
     this.encuesta = {
       id: 'enc-001',
       titulo: 'Evaluación del profesor',
+      tipo: 'DOCENTE',
       profesor: {
         id: 'prof-01',
         nombre: 'Carlos Martínez',
