@@ -25,18 +25,48 @@
 
     <section class="filters-card">
 
-      <div class="search-field">
+      <div class="date-field">
 
-        <i class="bi bi-search"></i>
+        <label for="fecha-desde">
+          Desde
+        </label>
 
         <input
-          type="search"
-          placeholder="Buscar encuesta o profesor..."
-          [value]="searchTerm()"
-          (input)="updateSearch($event)"
+          id="fecha-desde"
+          type="date"
+          [value]="fechaDesde()"
+          (change)="updateFechaDesde($event)"
         />
 
       </div>
+
+      <div class="date-field">
+
+        <label for="fecha-hasta">
+          Hasta
+        </label>
+
+        <input
+          id="fecha-hasta"
+          type="date"
+          [value]="fechaHasta()"
+          (change)="updateFechaHasta($event)"
+        />
+
+      </div>
+
+      @if (fechaDesde() || fechaHasta()) {
+
+        <button
+          type="button"
+          class="clear-dates-button"
+          (click)="limpiarFechas()"
+        >
+          <i class="bi bi-x-lg"></i>
+          <span>Limpiar fechas</span>
+        </button>
+
+      }
 
 
       <div class="status-field">
@@ -51,9 +81,9 @@
           (change)="updateStatus($event)"
         >
           <option value="TODOS">Todos</option>
-          <option value="ACTIVA">Activas</option>
-          <option value="BORRADOR">Borradores</option>
-          <option value="CERRADA">Cerradas</option>
+          @for (estado of estados; track estado.value) {
+            <option [value]="estado.value">{{ estado.label }}</option>
+          }
         </select>
 
       </div>
@@ -93,9 +123,9 @@
 
                 <span
                   class="status"
-                  [class.status--active]="survey.status === 'ACTIVA'"
+                  [class.status--active]="survey.status === 'PUBLICADA'"
                   [class.status--draft]="survey.status === 'BORRADOR'"
-                  [class.status--closed]="survey.status === 'CERRADA'"
+                  [class.status--closed]="survey.status === 'INACTIVA'"
                 >
                   {{ survey.status }}
                 </span>
@@ -123,7 +153,7 @@
 
                 <span>
                   <i class="bi bi-calendar3"></i>
-                  {{ survey.createdAt }}
+                  {{ formatDate(survey.createdAt) }}
                 </span>
 
               </div>
@@ -150,13 +180,22 @@
                 <span>Editar</span>
               </button>
 
+              <a
+                [routerLink]="['/admin/surveys', survey.id, 'results']"
+                  class="action-button"
+              >
+                <i class="bi bi-bar-chart"></i>
+                <span>Resultados</span>
+              </a>
+
 
               <button
                 type="button"
                 class="action-button"
+                (click)="generarQr(survey)"
               >
-                <i class="bi bi-bar-chart"></i>
-                <span>Resultados</span>
+                <i class="bi bi-qr-code"></i>
+                <span>Generar código QR</span>
               </button>
 
             </div>
@@ -195,5 +234,82 @@
     </section>
 
   </main>
+
+
+    <!-- ================================
+       MODAL DE CÓDIGO QR
+  ================================= -->
+
+  @if (qrSurvey(); as survey) {
+
+    <div class="qr-modal-overlay" (click)="cerrarQr()">
+
+      <div class="qr-modal" (click)="$event.stopPropagation()">
+
+        <header class="qr-modal__header">
+
+          <h3>Código QR</h3>
+
+          <button
+            type="button"
+            class="qr-modal__close"
+            (click)="cerrarQr()"
+            aria-label="Cerrar"
+          >
+            ×
+          </button>
+
+        </header>
+
+        <p class="qr-modal__survey-name">
+          {{ survey.name }}
+        </p>
+
+        <div class="qr-modal__image">
+
+          @if (qrLoading()) {
+
+            <span class="qr-modal__loading">
+              Generando código...
+            </span>
+
+          } @else if (qrDataUrl()) {
+
+            <img [src]="qrDataUrl()!" alt="Código QR de la encuesta" />
+
+          }
+
+        </div>
+
+        <p class="qr-modal__hint">
+          Los estudiantes que escaneen este código irán directo a responder la encuesta.
+        </p>
+
+        <div class="qr-modal__actions">
+
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="cerrarQr()"
+          >
+            Cerrar
+          </button>
+
+          <button
+            type="button"
+            class="primary-button"
+            [disabled]="!qrDataUrl()"
+            (click)="descargarQr()"
+          >
+            Descargar PNG
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
 
 </div>

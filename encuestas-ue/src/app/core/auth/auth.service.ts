@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Auth, User, browserLocalPersistence, OAuthProvider, onAuthStateChanged, setPersistence, signInWithEmailAndPassword,
   signInWithPopup, signOut, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail} from 'firebase/auth';
@@ -6,10 +6,12 @@ import { firebaseAuth } from '../config/firebase.config';
 import { environment } from '../../../environment/environment';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { firestoreDb } from '../config/firebase.config';
-
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private auth: Auth = firebaseAuth;
+  private http = inject(HttpClient);
 
   currentUser = signal<User | null>(null);
   errorMessage = signal<string | null>(null);
@@ -181,15 +183,18 @@ export class AuthService {
   }
 
   private async obtenerRol(): Promise<'ADMIN' | 'USER'> {
-    if (!environment.production && environment.devForceRole) {
-      return environment.devForceRole as 'ADMIN' | 'USER';
-    }
-
-    const tokenResult = await this.auth.currentUser?.getIdTokenResult();
-    const rol = tokenResult?.claims['role'];
-
-    return rol === 'ADMIN' ? 'ADMIN' : 'USER';
+  if (!environment.production && environment.devForceRole) {
+    return environment.devForceRole as 'ADMIN' | 'USER';
   }
+  try {
+    const perfil = await firstValueFrom(
+      this.http.get<{ role: 'ADMIN' | 'USER' }>(`${environment.apiUrl}/users/me`),
+    );
+    return perfil.role === 'ADMIN' ? 'ADMIN' : 'USER';
+  } catch {
+    return 'USER';
+  }
+}
 
   private traducirError(error: unknown): string {
     const code = (error as { code?: string })?.code ?? '';

@@ -8,12 +8,8 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { EncuestasService, CrearEncuestaPayload } from '../../../../core/services/encuestas.service';
-import { TipoEncuesta, TIPOS_ENCUESTA } from '../../../../shared/models/tipo-encuesta.model';
-
-interface Teacher {
-  id: string;
-  name: string;
-}
+import { EstadoEncuestaAdmin, ESTADOS_ENCUESTA_ADMIN } from '../../../../shared/models/estado-encuesta-admin.model';
+import { TipoPregunta, TIPOS_PREGUNTA } from '../../../../shared/models/pregunta.model';
 
 @Component({
   selector: 'app-create-survey',
@@ -29,34 +25,22 @@ export class CreateSurvey {
   protected readonly saved = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
-  protected readonly tiposEncuesta = TIPOS_ENCUESTA;
-
-  /**
-   * Datos temporales para construir la interfaz.
-   * Cuando Backend esté conectado, estos datos vendrán desde GET /api/teachers.
-   */
-  protected readonly teachers: Teacher[] = [
-    { id: 'teacher-001', name: 'Docente de ejemplo 1' },
-    { id: 'teacher-002', name: 'Docente de ejemplo 2' },
-    { id: 'teacher-003', name: 'Docente de ejemplo 3' },
-  ];
+  protected readonly estados = ESTADOS_ENCUESTA_ADMIN;
+  protected readonly tiposPregunta = TIPOS_PREGUNTA;
 
   protected readonly surveyForm = new FormGroup({
     title: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(5), Validators.maxLength(150)],
     }),
-
-    tipoEncuesta: new FormControl<TipoEncuesta | ''>('', {
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(500)],
+    }),
+    status: new FormControl<EstadoEncuestaAdmin>('BORRADOR', {
       nonNullable: true,
       validators: [Validators.required],
     }),
-
-    teacherId: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-
     questions: new FormArray([this.createQuestion()]),
   });
 
@@ -64,15 +48,39 @@ export class CreateSurvey {
     return this.surveyForm.controls.questions;
   }
 
-  /** Todas las preguntas utilizan obligatoriamente la escala estandarizada 1 - 5. */
+  getTipoLabel(tipo: string | undefined): string {
+    return this.tiposPregunta.find((t) => t.value === tipo)?.label ?? '';
+  }
+
+  getOpciones(texto: string | undefined): string[] {
+    return (texto ?? '')
+      .split('\n')
+      .map((o) => o.trim())
+      .filter(Boolean);
+  }
+  
+  getQuestionText(index: number): string {
+    const questionGroup = this.questions.at(index) as FormGroup;
+    return questionGroup?.get('text')?.value ?? '';
+  }
+
+  isQuestionInvalid(index: number): boolean {
+    const questionGroup = this.questions.at(index) as FormGroup;
+    const control = questionGroup?.get('text');
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
   createQuestion(): FormGroup {
     return new FormGroup({
       text: new FormControl('', {
         nonNullable: true,
         validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
       }),
-      scaleMin: new FormControl(1, { nonNullable: true }),
-      scaleMax: new FormControl(5, { nonNullable: true }),
+      type: new FormControl<TipoPregunta>('ESCALA', { nonNullable: true, validators: [Validators.required] }),
+      required: new FormControl(true, { nonNullable: true }),
+      status: new FormControl<'ACTIVA' | 'INACTIVA'>('ACTIVA', { nonNullable: true }),
+      // Solo se usa si type === 'SELECCION_MULTIPLE'; una opción por línea en el textarea.
+      options: new FormControl('', { nonNullable: true }),
     });
   }
 
@@ -85,20 +93,6 @@ export class CreateSurvey {
     if (this.questions.length === 1) return;
     this.questions.removeAt(index);
     this.saved.set(false);
-  }
-
-  getTeacherName(): string {
-    const teacherId = this.surveyForm.controls.teacherId.value;
-    return this.teachers.find((t) => t.id === teacherId)?.name ?? 'Sin docente seleccionado';
-  }
-
-  getQuestionText(index: number): string {
-    return this.questions.at(index).get('text')?.value ?? '';
-  }
-
-  isQuestionInvalid(index: number): boolean {
-    const textControl = this.questions.at(index).get('text');
-    return !!(textControl?.touched && textControl.invalid);
   }
 
   cancel(): void {
@@ -118,11 +112,21 @@ export class CreateSurvey {
 
     const payload: CrearEncuestaPayload = {
       titulo: this.surveyForm.controls.title.value.trim(),
-      tipo: this.surveyForm.controls.tipoEncuesta.value as TipoEncuesta,
-      profesorId: this.surveyForm.controls.teacherId.value,
-      preguntas: this.questions.controls.map((question) => ({
+      descripcion: this.surveyForm.controls.description.value.trim(),
+      estado: this.surveyForm.controls.status.value,
+      preguntas: this.questions.controls.map((question, index) => ({
         texto: question.get('text')?.value.trim(),
-        tipo: 'Escala 1 - 5',
+        tipo: question.get('type')?.value,
+        requerida: question.get('required')?.value,
+        displayOrder: index + 1,
+        estado: question.get('status')?.value,
+        opciones:
+          question.get('type')?.value === 'SELECCION_MULTIPLE'
+            ? (question.get('options')?.value as string)
+                .split('\n')
+                .map((o: string) => o.trim())
+                .filter(Boolean)
+            : undefined,
       })),
     };
 

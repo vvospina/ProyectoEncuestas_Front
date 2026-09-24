@@ -23,13 +23,19 @@ export const ADMIN_ROUTES: Routes = [
       ),
   },
   {
+    path: 'surveys/:id/results',
+    loadComponent: () =>
+      import('../admin/surveys/results/survey-results/survey-results').then((m) => m.SurveyResults),
+  },
+  {
+    path: 'surveys/:id/results/:studentId',
+    loadComponent: () =>
+    import('../admin/surveys/results/student-answers/student-answers/student-answers').then(
+        (m) => m.StudentAnswers,
+      ),
+  },
+  {
     path: 'surveys',
     loadComponent: () => import('./surveys/surveys').then((m) => m.Surveys),
   },
-  {
-    path: 'teachers',
-    loadComponent: () => import('./teachers/teachers').then((m) => m.Teachers),
-  },
-  // Agregar aquí /admin/surveys/create, /admin/surveys/:id,
-  // /admin/surveys/:id/results y /admin/teachers/:id/results (ver punto 24 del PDF).
 ];

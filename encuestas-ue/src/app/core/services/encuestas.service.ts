@@ -2,15 +2,24 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Encuesta } from '../../shared/models/encuesta.models';
-import { TipoEncuesta } from '../../shared/models/tipo-encuesta.model';
 import { EstadoEncuestaAdmin } from '../../shared/models/estado-encuesta-admin.model';
 import { environment } from '../../../environment/environment';
+import { TipoPregunta } from '../../shared/models/pregunta.model';
+import { EstudianteEncuestado } from '../../shared/models/estudiante-encuestado.model';
+import { RespuestaPregunta } from '../../shared/models/respuesta-pregunta.model';
 
 export interface CrearEncuestaPayload {
   titulo: string;
-  tipo: TipoEncuesta;
-  profesorId: string;
-  preguntas: { texto: string; tipo: 'Escala 1 - 5' }[];
+  descripcion: string;
+  estado: EstadoEncuestaAdmin;
+  preguntas: {
+    texto: string;
+    tipo: TipoPregunta;
+    requerida: boolean;
+    displayOrder: number;
+    estado: 'ACTIVA' | 'INACTIVA';
+    opciones?: string[];
+  }[];
 }
 
 /** Editar usa exactamente la misma forma que crear. */
@@ -64,5 +73,26 @@ export class EncuestasService {
   /** Cambia el estado de la encuesta a INACTIVA. */
   desactivarEncuesta(id: string): Observable<Encuesta> {
     return this.http.patch<Encuesta>(`${this.apiUrl}/${id}/desactivar`, {});
+  }
+
+    /** Estudiantes que ya respondieron una encuesta específica. */
+  listarEstudiantesQueRespondieron(encuestaId: string): Observable<EstudianteEncuestado[]> {
+    return this.http.get<EstudianteEncuestado[]>(`${this.apiUrl}/${encuestaId}/estudiantes`);
+  }
+
+  /** Respuestas de un estudiante puntual para una encuesta, con filtro de fechas opcional. */
+  obtenerRespuestasEstudiante(
+    encuestaId: string,
+    estudianteId: string,
+    filtros?: { desde?: string; hasta?: string },
+  ): Observable<RespuestaPregunta[]> {
+    let params = new HttpParams();
+    if (filtros?.desde) params = params.set('desde', filtros.desde);
+    if (filtros?.hasta) params = params.set('hasta', filtros.hasta);
+
+    return this.http.get<RespuestaPregunta[]>(
+      `${this.apiUrl}/${encuestaId}/estudiantes/${estudianteId}/respuestas`,
+      { params },
+    );
   }
 }

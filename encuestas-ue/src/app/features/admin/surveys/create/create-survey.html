@@ -113,95 +113,67 @@
         </div>
 
 
-        <!-- DOCENTE -->
+        <!-- DESCRIPCIÓN -->
+
+        <div class="form-field form-field--full">
+
+          <label for="description">
+            Descripción
+            <span class="required">*</span>
+          </label>
+
+          <textarea
+            id="description"
+            rows="3"
+            formControlName="description"
+            maxlength="500"
+            placeholder="Ej. Evaluación de la experiencia académica y docente del semestre."
+          ></textarea>
+
+          <div class="field-meta">
+
+            <span>
+              {{ surveyForm.controls.description.value.length }}/500
+            </span>
+
+          </div>
+
+          @if (
+            surveyForm.controls.description.touched &&
+            surveyForm.controls.description.hasError('required')
+          ) {
+
+            <span class="field-error">
+              La descripción es obligatoria.
+            </span>
+
+          }
+
+        </div>
+
+
+        <!-- ESTADO -->
 
         <div class="form-field">
 
-          <label for="teacher">
-            Docente
+          <label for="status">
+            Estado
             <span class="required">*</span>
           </label>
 
           <select
-            id="teacher"
-            formControlName="teacherId">
+            id="status"
+            formControlName="status">
 
-            <option value="">
-              Selecciona un docente
-            </option>
+            @for (estado of estados; track estado.value) {
 
-            @for (teacher of teachers; track teacher.id) {
-
-              <option [value]="teacher.id">
-                {{ teacher.name }}
+              <option [value]="estado.value">
+                {{ estado.label }}
               </option>
 
             }
 
           </select>
-
-          @if (
-            surveyForm.controls.teacherId.touched &&
-            surveyForm.controls.teacherId.hasError('required')
-          ) {
-
-            <span class="field-error">
-              Debes seleccionar un docente.
-            </span>
-
-          }
-
-        </div>
-
-        <!-- TIPO DE ENCUESTA -->
-        <div class="form-field">
-          <label for="tipoEncuesta">
-            Tipo de encuesta
-            <span class="required">*</span>
-          </label>
-
-          <select id="tipoEncuesta" formControlName="tipoEncuesta">
-            <option value="">Selecciona un tipo</option>
-            @for (tipo of tiposEncuesta; track tipo.value) {
-              <option [value]="tipo.value">{{ tipo.label }}</option>
-            }
-          </select>
-
-          @if (
-            surveyForm.controls.tipoEncuesta.touched &&
-            surveyForm.controls.tipoEncuesta.hasError('required')
-          ) {
-            <span class="field-error">Debes seleccionar un tipo de encuesta.</span>
-          }
-        </div>
-
-        <!-- ESCALA -->
-
-        <div class="form-field">
-
-          <label>
-            Escala de respuesta
-          </label>
-
-          <div class="scale-info">
-
-            <span class="scale-info__value">
-              1
-            </span>
-
-            <span class="scale-info__separator">
-              →
-            </span>
-
-            <span class="scale-info__value">
-              5
-            </span>
-
-            <span class="scale-info__text">
-              Escala estandarizada
-            </span>
-
-          </div>
 
         </div>
 
@@ -224,7 +196,6 @@
 
           <p>
             Agrega las preguntas que responderán los estudiantes.
-            Todas utilizan una escala de 1 a 5.
           </p>
 
         </div>
@@ -275,7 +246,7 @@
                 </strong>
 
                 <span>
-                  Escala de valoración 1–5
+                  {{ getTipoLabel(question.get('type')?.value) }}
                 </span>
 
               </div>
@@ -354,68 +325,166 @@
             </div>
 
 
-            <!-- ESCALA -->
+            <!-- CONFIGURACIÓN DE LA PREGUNTA -->
 
-            <div class="question-scale">
+            <div class="form-grid">
 
-              <span class="question-scale__label">
-                Respuesta del estudiante
-              </span>
+              <!-- TIPO DE PREGUNTA -->
 
-              <div class="scale-options">
+              <div class="form-field">
 
-                @for (
-                  value of [1, 2, 3, 4, 5];
-                  track value
-                ) {
+                <label [for]="'question-type-' + i">
+                  Tipo de pregunta
+                </label>
 
-                  <div class="scale-option">
+                <select
+                  [id]="'question-type-' + i"
+                  formControlName="type">
 
-                    <span class="scale-option__number">
-                      {{ value }}
-                    </span>
+                  @for (tipo of tiposPregunta; track tipo.value) {
 
-                    @switch (value) {
+                    <option [value]="tipo.value">
+                      {{ tipo.label }}
+                    </option>
 
-                      @case (1) {
-                        <span class="scale-option__text">
-                          Muy baja
-                        </span>
-                      }
+                  }
 
-                      @case (2) {
-                        <span class="scale-option__text">
-                          Baja
-                        </span>
-                      }
+                </select>
 
-                      @case (3) {
-                        <span class="scale-option__text">
-                          Neutral
-                        </span>
-                      }
+              </div>
 
-                      @case (4) {
-                        <span class="scale-option__text">
-                          Alta
-                        </span>
-                      }
 
-                      @case (5) {
-                        <span class="scale-option__text">
-                          Muy alta
-                        </span>
-                      }
+              <!-- ESTADO DE LA PREGUNTA -->
 
-                    }
+              <div class="form-field">
 
-                  </div>
+                <label [for]="'question-status-' + i">
+                  Estado
+                </label>
 
-                }
+                <select
+                  [id]="'question-status-' + i"
+                  formControlName="status">
+
+                  <option value="ACTIVA">Activa</option>
+                  <option value="INACTIVA">Inactiva</option>
+
+                </select>
+
+              </div>
+
+
+              <!-- REQUERIDA -->
+
+              <div class="form-field form-field--checkbox">
+
+                <label [for]="'question-required-' + i">
+                  <input
+                    type="checkbox"
+                    [id]="'question-required-' + i"
+                    formControlName="required"
+                  />
+                  Pregunta obligatoria
+                </label>
 
               </div>
 
             </div>
+
+
+            <!-- OPCIONES (solo si es selección múltiple) -->
+
+            @if (question.get('type')?.value === 'SELECCION_MULTIPLE') {
+
+              <div class="form-field">
+
+                <label [for]="'question-options-' + i">
+                  Opciones de respuesta
+                  <span class="required">*</span>
+                </label>
+
+                <textarea
+                  [id]="'question-options-' + i"
+                  rows="3"
+                  formControlName="options"
+                  placeholder="Una opción por línea. Ej:&#10;Excelente&#10;Bueno&#10;Regular&#10;Malo"
+                ></textarea>
+
+                <div class="field-meta">
+                  <span>Escribe una opción por línea.</span>
+                </div>
+
+              </div>
+
+            }
+
+
+            <!-- VISTA DE ESCALA (solo si es tipo escala) -->
+
+            @if (question.get('type')?.value === 'ESCALA') {
+
+              <div class="question-scale">
+
+                <span class="question-scale__label">
+                  Respuesta del estudiante
+                </span>
+
+                <div class="scale-options">
+
+                  @for (
+                    value of [1, 2, 3, 4, 5];
+                    track value
+                  ) {
+
+                    <div class="scale-option">
+
+                      <span class="scale-option__number">
+                        {{ value }}
+                      </span>
+
+                      @switch (value) {
+
+                        @case (1) {
+                          <span class="scale-option__text">
+                            Muy baja
+                          </span>
+                        }
+
+                        @case (2) {
+                          <span class="scale-option__text">
+                            Baja
+                          </span>
+                        }
+
+                        @case (3) {
+                          <span class="scale-option__text">
+                            Neutral
+                          </span>
+                        }
+
+                        @case (4) {
+                          <span class="scale-option__text">
+                            Alta
+                          </span>
+                        }
+
+                        @case (5) {
+                          <span class="scale-option__text">
+                            Muy alta
+                          </span>
+                        }
+
+                      }
+
+                    </div>
+
+                  }
+
+                </div>
+
+              </div>
+
+            }
 
           </article>
 
@@ -486,17 +555,12 @@
             }}
           </h3>
 
-          <div class="preview__teacher">
-
-            <span>
-              Docente:
-            </span>
-
-            <strong>
-              {{ getTeacherName() }}
-            </strong>
-
-          </div>
+          <p class="preview__description">
+            {{
+              surveyForm.controls.description.value ||
+              'Descripción de la encuesta...'
+            }}
+          </p>
 
         </div>
 
@@ -526,44 +590,103 @@
                     'Aquí aparecerá la pregunta...'
                   }}
 
+                  @if (question.get('required')?.value) {
+                    <span class="required">*</span>
+                  }
+
                 </p>
 
 
-                <div class="preview-scale">
+                @switch (question.get('type')?.value) {
 
-                  @for (
-                    value of [1, 2, 3, 4, 5];
-                    track value
-                  ) {
+                  @case ('ESCALA') {
 
-                    <label class="preview-scale__item">
+                    <div class="preview-scale">
 
-                      <input
-                        type="radio"
-                        [name]="'preview-question-' + i"
-                      />
+                      @for (
+                        value of [1, 2, 3, 4, 5];
+                        track value
+                      ) {
+
+                        <label class="preview-scale__item">
+
+                          <input
+                            type="radio"
+                            [name]="'preview-question-' + i"
+                          />
+
+                          <span>
+                            {{ value }}
+                          </span>
+
+                        </label>
+
+                      }
+
+                    </div>
+
+                    <div class="preview-scale__labels">
 
                       <span>
-                        {{ value }}
+                        Muy baja
                       </span>
 
-                    </label>
+                      <span>
+                        Muy alta
+                      </span>
+
+                    </div>
 
                   }
 
-                </div>
+                  @case ('SELECCION_MULTIPLE') {
 
-                <div class="preview-scale__labels">
+                    <div class="preview-options">
 
-                  <span>
-                    Muy baja
-                  </span>
+                      @for (
+                        opcion of getOpciones(question.get('options')?.value);
+                        track opcion
+                      ) {
 
-                  <span>
-                    Muy alta
-                  </span>
+                        <label class="preview-options__item">
 
-                </div>
+                          <input
+                            type="radio"
+                            [name]="'preview-question-' + i"
+                          />
+
+                          <span>
+                            {{ opcion }}
+                          </span>
+
+                        </label>
+
+                      }
+
+                      @empty {
+
+                        <span class="preview-options__empty">
+                          Agrega opciones para verlas aquí.
+                        </span>
+
+                      }
+
+                    </div>
+
+                  }
+
+                  @case ('ABIERTA') {
+
+                    <textarea
+                      class="preview-open"
+                      rows="2"
+                      placeholder="Respuesta abierta del estudiante..."
+                      disabled
+                    ></textarea>
+
+                  }
+
+                }
 
               </div>
 

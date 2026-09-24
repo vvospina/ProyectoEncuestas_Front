@@ -21,23 +21,44 @@ export class SurveysComponent implements OnInit {
   }
 
   cargarEncuestaMock(): void {
-    this.encuesta = {
-      id: 'enc-001',
-      titulo: 'Evaluación del profesor',
-      tipo: 'DOCENTE',
-      profesor: {
-        id: 'prof-01',
-        nombre: 'Carlos Martínez',
-        estado: 'Activo',
-        categoria: 'Profesores'
+  this.encuesta = {
+    id: 'enc-001',
+    titulo: 'Evaluación del profesor',
+    tipo: 'DOCENTE',
+    profesor: {
+      id: 'prof-01',
+      nombre: 'Carlos Martínez',
+      estado: 'Activo',
+      categoria: 'Profesores'
+    },
+    preguntas: [
+      { 
+        id: 'q1', 
+        texto: 'El profesor explica claramente los temas tratados durante la clase.', 
+        tipo: 'ESCALA',
+        requerida: true,
+        displayOrder: 1,
+        estado: 'ACTIVA'
       },
-      preguntas: [
-        { id: 'q1', texto: 'El profesor explica claramente los temas tratados durante la clase.', tipo: 'Escala 1 - 5' },
-        { id: 'q2', texto: 'El profesor resuelve las dudas de manera oportuna.', tipo: 'Escala 1 - 5' },
-        { id: 'q3', texto: 'El material de apoyo es útil y actualizado.', tipo: 'Escala 1 - 5' }
-      ]
-    };
-  }
+      { 
+        id: 'q2', 
+        texto: 'El profesor resuelve las dudas de manera oportuna.', 
+        tipo: 'ESCALA',
+        requerida: true,
+        displayOrder: 2,
+        estado: 'ACTIVA'
+      },
+      { 
+        id: 'q3', 
+        texto: 'El material de apoyo es útil y actualizado.', 
+        tipo: 'ESCALA',
+        requerida: true,
+        displayOrder: 3,
+        estado: 'ACTIVA'
+      }
+    ]
+  };
+}
 
   get respuestaSeleccionada(): number | null {
     if (!this.encuesta) return null;

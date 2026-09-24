@@ -142,6 +142,22 @@
   font-size: 12px;
 }
 
+.form-field--checkbox {
+  display: flex; 
+  align-items: center; 
+  gap: 8px;
+}
+
+.preview-options {
+  display: flex;
+  gap: 10px;
+}
+
+.preview-open {
+  display: flex;
+  gap: 10px;
+}
+
 
 /* ================================
    ESCALA GENERAL

@@ -1,0 +1,107 @@
+<div class="student-answers-page">
+
+  <header class="answers-header">
+
+    <a
+      [routerLink]="['/admin/surveys', encuestaId, 'results']"
+      class="back-link"
+    >
+      <i class="bi bi-arrow-left"></i>
+      <span>Volver a estudiantes</span>
+    </a>
+
+    <div class="answers-header__student">
+
+      <div class="answers-header__avatar">
+        <i class="bi bi-person"></i>
+      </div>
+
+      <div>
+        <h1>{{ estudianteNombre() }}</h1>
+        <p>{{ estudianteCorreo() }}</p>
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <main class="answers-content">
+
+    <section class="filters-card">
+
+      <div class="date-field">
+        <label for="fecha-desde">Desde</label>
+        <input
+          id="fecha-desde"
+          type="date"
+          [value]="fechaDesde()"
+          (change)="updateFechaDesde($event)"
+        />
+      </div>
+
+      <div class="date-field">
+        <label for="fecha-hasta">Hasta</label>
+        <input
+          id="fecha-hasta"
+          type="date"
+          [value]="fechaHasta()"
+          (change)="updateFechaHasta($event)"
+        />
+      </div>
+
+      @if (fechaDesde() || fechaHasta()) {
+        <button
+          type="button"
+          class="clear-dates-button"
+          (click)="limpiarFechas()"
+        >
+          <i class="bi bi-x-lg"></i>
+          <span>Limpiar fechas</span>
+        </button>
+      }
+
+    </section>
+
+
+    <section class="answers-list">
+
+      @if (respuestasFiltradas().length > 0) {
+
+        @for (respuesta of respuestasFiltradas(); track respuesta.preguntaId) {
+
+          <article class="answer-card">
+
+            <div class="answer-card__header">
+              <span class="answer-card__type">{{ etiquetaTipo(respuesta.tipoPregunta) }}</span>
+              <span class="answer-card__date">
+                <i class="bi bi-calendar3"></i>
+                {{ formatDate(respuesta.fechaRespuesta) }}
+              </span>
+            </div>
+
+            <p class="answer-card__question">{{ respuesta.preguntaTexto }}</p>
+
+            <p class="answer-card__answer">{{ respuesta.respuesta }}</p>
+
+          </article>
+
+        }
+
+      } @else {
+
+        <div class="empty-state">
+          <div class="empty-state__icon">
+            <i class="bi bi-clipboard-x"></i>
+          </div>
+          <h3>Sin respuestas en este rango</h3>
+          <p>Prueba cambiando el filtro de fechas.</p>
+        </div>
+
+      }
+
+    </section>
+
+  </main>
+
+</div>

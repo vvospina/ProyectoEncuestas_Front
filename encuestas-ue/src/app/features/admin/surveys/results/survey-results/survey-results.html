@@ -1,0 +1,80 @@
+<div class="survey-results-page">
+
+  <header class="results-header">
+
+    <a
+      [routerLink]="['/admin/surveys']"
+      class="back-link"
+    >
+      <i class="bi bi-arrow-left"></i>
+      <span>Volver a encuestas</span>
+    </a>
+
+    <div>
+      <span class="results-header__eyebrow">Resultados</span>
+      <h1>{{ encuestaNombre() }}</h1>
+      <p>Estudiantes que ya respondieron esta encuesta.</p>
+    </div>
+
+  </header>
+
+
+  <main class="results-content">
+
+    <section class="students-list">
+
+      <div class="list-header">
+        <h2>Estudiantes</h2>
+        <span>
+          {{ estudiantes().length }}
+          {{ estudiantes().length === 1 ? 'estudiante' : 'estudiantes' }}
+        </span>
+      </div>
+
+      @if (estudiantes().length > 0) {
+
+        @for (estudiante of estudiantes(); track estudiante.estudianteId) {
+
+          <a
+            class="student-card"
+            [routerLink]="['/admin/surveys', encuestaId, 'results', estudiante.estudianteId]"
+          >
+
+            <div class="student-card__avatar">
+              <i class="bi bi-person"></i>
+            </div>
+
+            <div class="student-card__info">
+              <h3>{{ estudiante.nombre }}</h3>
+              <p>{{ estudiante.correo }}</p>
+            </div>
+
+            <div class="student-card__meta">
+              <span>
+                <i class="bi bi-calendar3"></i>
+                {{ formatDate(estudiante.fechaRespuesta) }}
+              </span>
+              <i class="bi bi-chevron-right"></i>
+            </div>
+
+          </a>
+
+        }
+
+      } @else {
+
+        <div class="empty-state">
+          <div class="empty-state__icon">
+            <i class="bi bi-clipboard-x"></i>
+          </div>
+          <h3>Todavía no hay respuestas</h3>
+          <p>Cuando algún estudiante responda esta encuesta, aparecerá aquí.</p>
+        </div>
+
+      }
+
+    </section>
+
+  </main>
+
+</div>
