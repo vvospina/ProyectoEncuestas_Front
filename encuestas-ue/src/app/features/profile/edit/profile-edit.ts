@@ -22,7 +22,6 @@ export class ProfileEditComponent {
 
   form = this.fb.nonNullable.group({
     nombre: ['', [Validators.required, Validators.minLength(2)]],
-    apellido: ['', [Validators.required, Validators.minLength(2)]],
   });
 
   constructor() {
@@ -30,11 +29,12 @@ export class ProfileEditComponent {
     this.auth.profileUpdateSuccess.set(false);
 
     const displayName = this.auth.currentUser()?.displayName?.trim() ?? '';
-    const partes = displayName.split(' ');
-    this.form.setValue({
-      nombre: partes[0] ?? '',
-      apellido: partes.slice(1).join(' '),
-    });
+    this.form.setValue({ nombre: displayName });
+  }
+
+  /** Evita que un admin sea enviado a /user/profile y viceversa. */
+  protected get profilePath(): string {
+    return this.router.url.startsWith('/admin') ? '/admin/profile' : '/user/profile';
   }
 
   onFotoSeleccionada(event: Event): void {
@@ -51,13 +51,13 @@ export class ProfileEditComponent {
         this.form.markAllAsTouched();
         return;
     }
-    const { nombre, apellido } = this.form.getRawValue();
+    const { nombre } = this.form.getRawValue();
 
         let fotoBase64: string | undefined;
         if (this.archivoSeleccionado) {
             fotoBase64 = await comprimirImagenABase64(this.archivoSeleccionado);
         }
 
-        await this.auth.updateUserProfile(nombre, apellido, fotoBase64);
+        await this.auth.updateUserProfile(nombre.trim(), '', fotoBase64);
     }
 }

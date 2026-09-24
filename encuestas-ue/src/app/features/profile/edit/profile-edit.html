@@ -1,7 +1,7 @@
 <div class="profile-edit-page">
   <header class="profile-header">
     <h1>Editar perfil</h1>
-    <a routerLink="/user/profile" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+      <a [routerLink]="profilePath" class="btn btn-outline-secondary btn-sm">Cancelar</a>
   </header>
 
   <section class="profile-card">
@@ -30,24 +30,11 @@
           type="text"
           class="form-control"
           formControlName="nombre"
+          placeholder="Nombre y apellido"
           [class.is-invalid]="form.controls.nombre.invalid && form.controls.nombre.touched"
         />
         @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
           <p class="invalid-feedback d-block">Escribe tu nombre.</p>
-        }
-      </div>
-
-      <div class="mb-3">
-        <label for="apellido" class="form-label text-uppercase small fw-bold text-muted">Apellido</label>
-        <input
-          id="apellido"
-          type="text"
-          class="form-control"
-          formControlName="apellido"
-          [class.is-invalid]="form.controls.apellido.invalid && form.controls.apellido.touched"
-        />
-        @if (form.controls.apellido.invalid && form.controls.apellido.touched) {
-          <p class="invalid-feedback d-block">Escribe tu apellido.</p>
         }
       </div>
 

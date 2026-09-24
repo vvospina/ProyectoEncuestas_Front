@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
@@ -11,17 +11,15 @@ import { AuthService } from '../../../core/auth/auth.service';
 })
 export class ProfileComponent {
   auth = inject(AuthService);
+  private readonly router = inject(Router);
 
-  protected readonly nombre = computed(() => this.dividirNombre().nombre);
-  protected readonly apellido = computed(() => this.dividirNombre().apellido);
+  protected readonly nombre = computed(() => {
+    const displayName = this.auth.currentUser()?.displayName?.trim();
+    return displayName || '(sin nombre)';
+  });
 
-  private dividirNombre(): { nombre: string; apellido: string } {
-    const displayName = this.auth.currentUser()?.displayName?.trim() ?? '';
-    if (!displayName) return { nombre: '(sin nombre)', apellido: '' };
-    const partes = displayName.split(' ');
-    return {
-      nombre: partes[0],
-      apellido: partes.slice(1).join(' ') || '(sin apellido)',
-    };
+  /** Evita que un admin sea enviado a /user/profile/edit y viceversa. */
+  protected get editProfilePath(): string {
+    return this.router.url.startsWith('/admin') ? '/admin/profile/edit' : '/user/profile/edit';
   }
 }

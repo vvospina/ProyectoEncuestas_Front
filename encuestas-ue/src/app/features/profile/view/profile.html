@@ -14,9 +14,11 @@
   } @else {
     <header class="profile-header">
       <h1>Mi perfil</h1>
-      <a routerLink="/user/profile/edit" class="btn btn-outline-secondary btn-sm">
+
+      <a [routerLink]="editProfilePath" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-pencil"></i> Editar perfil
       </a>
+      
     </header>
 
     <section class="profile-card">
@@ -32,10 +34,6 @@
         <div class="profile-fields__row">
           <dt>Nombre</dt>
           <dd>{{ nombre() }}</dd>
-        </div>
-        <div class="profile-fields__row">
-          <dt>Apellido</dt>
-          <dd>{{ apellido() }}</dd>
         </div>
         <div class="profile-fields__row">
           <dt>Correo</dt>
