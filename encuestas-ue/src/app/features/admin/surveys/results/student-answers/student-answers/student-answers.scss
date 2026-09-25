@@ -162,6 +162,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   margin-bottom: 0.6rem;
 }
 
@@ -240,4 +242,31 @@
   margin: 0.4rem 0 0;
   color: var(--color-muted);
   font-size: 0.68rem;
+}
+
+/* ================================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 576px) {
+
+  .answers-header,
+  .answers-content {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .filters-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .date-field {
+    width: 100%;
+  }
+
+  .clear-dates-button {
+    width: 100%;
+    justify-content: center;
+  }
 }

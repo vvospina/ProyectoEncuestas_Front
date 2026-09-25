@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+$primary: #0E3EBA;
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap');
 @import 'bootstrap-icons/font/bootstrap-icons.css';
 @import "bootstrap/scss/bootstrap";
 
@@ -59,11 +61,11 @@ a {
    ESTILOS DE VALE
    -------------------------------------------------------------------------- */
 .btn-primary {
-  --bs-btn-bg: var(--color-primary);
-  --bs-btn-border-color: var(--color-primary);
-  --bs-btn-hover-bg: var(--color-primary-dark);
-  --bs-btn-hover-border-color: var(--color-primary-dark);
-  --bs-btn-active-bg: var(--color-primary-dark);
+  --bs-btn-bg: var(--color-secondary);
+  --bs-btn-border-color: var(--color-secondary);
+  --bs-btn-hover-bg: var(--color-secondary-dark);
+  --bs-btn-hover-border-color: var(--color-secondary-dark);
+  --bs-btn-active-bg: var(--color-secondary-dark);
 }
 
 .card {

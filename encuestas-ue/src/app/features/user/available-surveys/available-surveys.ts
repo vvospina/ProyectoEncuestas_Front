@@ -60,7 +60,6 @@ export class AvailableSurveysComponent implements OnInit {
 
   responderEncuesta(id: string): void {
     // Redirige a la pantalla de la encuesta (Prueba)
-    this.router.navigate(['/user/surveys', id]);
     this.router.navigate(['/user/responder-encuesta', id]);
   }
 

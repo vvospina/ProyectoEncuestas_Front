@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: center;
 
-  background-color: #E8E8ED;          /* fondo gris del Stitch */
+  background-color: var(--color-bg);
 }
 
 /* ─── Tarjeta ─────────────────────────────────────────────── */
@@ -32,7 +32,7 @@
   align-items: center;
   text-align: center;
 
-  background-color: #ffffff;          /* surface-container-lowest */
+  background-color: var(--color-surface);
   border-radius: 24px;                /* rounded-3xl del Stitch */
   box-shadow: 0 4px 20px rgba(19, 32, 62, 0.08);
 
@@ -54,12 +54,12 @@
   justify-content: center;
 
   border-radius: 50%;
-  background-color: rgba(228, 31, 37, 0.08);   /* primary-container/10 */
+  background-color: rgba(211, 47, 47, 0.08);   /* var(--color-primary) al 8% */
 }
 
 .session-closed-icon .material-symbols-outlined {
   font-size: 2.5rem;
-  color: #bb0014;                     /* primary del design system */
+  color: var(--color-primary);
   font-variation-settings: 'FILL' 1;  /* ícono relleno */
 }
 
@@ -71,7 +71,7 @@
   font-weight: 700;
   line-height: 2rem;
   letter-spacing: -0.01em;
-  color: #0d1a38;                     /* on-surface */
+  color: var(--color-text);
 }
 
 @media (min-width: 640px) {
@@ -88,7 +88,7 @@
   font-size: 1rem;                    /* body-md: 16px */
   font-weight: 400;
   line-height: 1.5rem;
-  color: #5d3f3c;                     /* on-surface-variant */
+  color: var(--color-muted);
   max-width: 24rem;
 }
 
@@ -102,8 +102,8 @@
   justify-content: center;
 
   border-radius: 9999px;              /* pill */
-  background-color: #bb0014;          /* primary */
-  color: #ffffff;                     /* on-primary */
+  background-color: var(--color-primary);
+  color: var(--color-surface);
 
   font-family: 'Inter', sans-serif;
   font-size: 0.75rem;                 /* label-caps: 12px */
@@ -118,8 +118,9 @@
 }
 
 .back-to-login-button:hover {
+  background-color: var(--color-primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(187, 0, 20, 0.35);
+  box-shadow: 0 4px 16px rgba(211, 47, 47, 0.35);
 }
 
 .back-to-login-button:active {

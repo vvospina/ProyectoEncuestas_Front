@@ -1,6 +1,6 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import * as QRCode from 'qrcode';
+import { QrService } from '../../../core/services/qr.service';
 import { EstadoEncuestaAdmin, ESTADOS_ENCUESTA_ADMIN } from '../../../shared/models/estado-encuesta-admin.model';
 
 interface Survey {
@@ -22,12 +22,13 @@ interface Survey {
 })
 export class Surveys {
   protected readonly estados = ESTADOS_ENCUESTA_ADMIN;
+  private readonly qrService = inject(QrService);
 
   protected readonly selectedStatus = signal('TODOS');
   protected readonly fechaDesde = signal('');
   protected readonly fechaHasta = signal('');
 
-  // ── Modal de código QR ──────────────────────────────────
+  // ── Modal de código QR
   protected readonly qrSurvey = signal<Survey | null>(null);
   protected readonly qrDataUrl = signal<string | null>(null);
   protected readonly qrLoading = signal(false);
@@ -115,7 +116,7 @@ export class Surveys {
 
     try {
       const url = `${window.location.origin}/user/responder-encuesta/${survey.id}`;
-      const dataUrl = await QRCode.toDataURL(url, { width: 260, margin: 1 });
+      const dataUrl = await this.qrService.generar(url);
       this.qrDataUrl.set(dataUrl);
     } catch (err) {
       console.error('Error al generar el código QR', err);

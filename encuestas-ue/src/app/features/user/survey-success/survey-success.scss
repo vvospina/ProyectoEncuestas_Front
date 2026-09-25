@@ -79,6 +79,7 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  flex-shrink: 0;
   margin: 0;
 
   color: var(--color-muted);
@@ -88,8 +89,11 @@
 
 .success-summary__row dd {
   margin: 0;
+  min-width: 0;
   color: var(--color-text);
   font-weight: 700;
+  text-align: right;
+  word-break: break-word;
 }
 
 .back-button {
@@ -99,7 +103,7 @@
   display: block;
   border-radius: 999px;
 
-  background-color: var(--color-primary);
+  background-color: var(--color-secondary);
   color: var(--color-surface);
 
   font-weight: 700;
@@ -111,11 +115,21 @@
 }
 
 .back-button:hover {
-  background-color: var(--color-primary-dark);
+  background-color: var(--color-secondary-dark);
 }
 
 @media (max-width: 380px) {
   .success-card {
     padding: 2rem 1.25rem;
+  }
+
+  .success-summary__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+
+  .success-summary__row dd {
+    text-align: left;
   }
 }

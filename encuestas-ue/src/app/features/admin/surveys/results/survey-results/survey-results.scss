@@ -90,6 +90,7 @@
 
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
 
   border: 1px solid var(--color-border);
@@ -130,12 +131,18 @@
   color: var(--color-text);
   font-size: 0.85rem;
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .student-card__info p {
   margin: 0.2rem 0 0;
   color: var(--color-muted);
   font-size: 0.68rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .student-card__meta {
@@ -188,4 +195,27 @@
   margin: 0.4rem 0 0;
   color: var(--color-muted);
   font-size: 0.68rem;
+}
+
+/* ================================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 480px) {
+
+  .results-header,
+  .results-content {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .student-card__info {
+    flex-basis: 100%;
+  }
+
+  .student-card__meta {
+    flex-basis: 100%;
+    justify-content: space-between;
+    padding-left: calc(2.4rem + 1rem);
+  }
 }

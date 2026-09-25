@@ -45,7 +45,7 @@
 
   border-radius: 0.45rem;
 
-  background-color: var(--color-primary);
+  background-color: var(--color-secondary);
   color: var(--color-surface);
 
   font-size: 0.7rem;
@@ -58,7 +58,7 @@
 }
 
 .create-button:hover {
-  background-color: var(--color-primary-dark);
+  background-color: var(--color-secondary-dark);
 }
 
 .create-button:active {
@@ -95,26 +95,23 @@
   background-color: var(--color-surface);
 }
 
-.search-field {
-  position: relative;
-  flex: 1;
+.date-field {
+  width: 150px;
 }
 
-.search-field i {
-  position: absolute;
-  left: 0.85rem;
-  top: 50%;
+.date-field label {
+  display: block;
+  margin-bottom: 0.4rem;
 
-  color: var(--color-muted);
-  font-size: 0.8rem;
-
-  transform: translateY(-50%);
+  color: var(--color-text);
+  font-size: 0.68rem;
+  font-weight: 600;
 }
 
-.search-field input,
-.status-field select {
+.date-field input {
   width: 100%;
   min-height: 2.5rem;
+  padding: 0 0.6rem;
 
   border: 1px solid var(--color-border);
   border-radius: 0.45rem;
@@ -123,19 +120,38 @@
   color: var(--color-text);
 
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
+}
 
+.date-field input:focus {
   outline: none;
-}
-
-.search-field input {
-  padding: 0 0.75rem 0 2.25rem;
-}
-
-.search-field input:focus,
-.status-field select:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 0.15rem rgba(238, 40, 43, 0.12);
+}
+
+.clear-dates-button {
+  min-height: 2.5rem;
+  padding: 0 0.75rem;
+  align-self: flex-end;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  border: 1px solid var(--color-border);
+  border-radius: 0.45rem;
+
+  background: transparent;
+  color: var(--color-muted);
+
+  font-size: 0.65rem;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.clear-dates-button:hover {
+  background-color: #f7f7fa;
 }
 
 .status-field {
@@ -152,7 +168,26 @@
 }
 
 .status-field select {
+  width: 100%;
+  min-height: 2.5rem;
+
+  border: 1px solid var(--color-border);
+  border-radius: 0.45rem;
+
+  background-color: var(--color-surface);
+  color: var(--color-text);
+
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+
+  outline: none;
+
   padding: 0 0.7rem;
+}
+
+.status-field select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.15rem rgba(238, 40, 43, 0.12);
 }
 
 
@@ -385,157 +420,12 @@
 
   border-radius: 0.4rem;
 
-  background-color: var(--color-primary);
+  background-color: var(--color-secondary);
   color: var(--color-surface);
 
   font-size: 0.65rem;
   font-weight: 700;
   text-decoration: none;
-}
-
-
-/* ================================
-   RESPONSIVE
-   ================================ */
-
-@media (max-width: 768px) {
-
-  .surveys-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .create-button {
-    width: 100%;
-  }
-
-  .filters-card {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .status-field {
-    width: 100%;
-  }
-
-  .survey-card {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .survey-card__actions {
-    padding-top: 0.75rem;
-
-    border-top: 1px solid var(--color-border);
-
-    justify-content: flex-end;
-  }
-
-}
-
-@media (max-width: 576px) {
-
-  .surveys-header {
-    padding: 1.5rem 1rem 1rem;
-  }
-
-  .surveys-header h1 {
-    font-size: 1.25rem;
-  }
-
-  .surveys-content {
-    padding: 0 1rem 1.5rem;
-  }
-
-  .survey-card {
-    padding: 1rem;
-  }
-
-  .survey-card__title-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-
-  .survey-meta {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-
-  .survey-card__actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .action-button {
-    flex: 1;
-    justify-content: center;
-  }
-
-}
-
-/* ================================
-   FILTRO POR FECHAS
-   ================================ */
-
-.date-field {
-  width: 150px;
-}
-
-.date-field label {
-  display: block;
-  margin-bottom: 0.4rem;
-
-  color: var(--color-text);
-  font-size: 0.68rem;
-  font-weight: 600;
-}
-
-.date-field input {
-  width: 100%;
-  min-height: 2.5rem;
-  padding: 0 0.6rem;
-
-  border: 1px solid var(--color-border);
-  border-radius: 0.45rem;
-
-  background-color: var(--color-surface);
-  color: var(--color-text);
-
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-}
-
-.date-field input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 0.15rem rgba(238, 40, 43, 0.12);
-}
-
-.clear-dates-button {
-  min-height: 2.5rem;
-  padding: 0 0.75rem;
-  align-self: flex-end;
-
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-
-  border: 1px solid var(--color-border);
-  border-radius: 0.45rem;
-
-  background: transparent;
-  color: var(--color-muted);
-
-  font-size: 0.65rem;
-  font-weight: 600;
-
-  cursor: pointer;
-}
-
-.clear-dates-button:hover {
-  background-color: #f7f7fa;
 }
 
 
@@ -649,4 +539,96 @@
 .qr-modal__actions .secondary-button,
 .qr-modal__actions .primary-button {
   flex: 1;
+}
+
+
+/* ================================
+   RESPONSIVE
+   ================================ */
+
+@media (max-width: 768px) {
+
+  .surveys-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .create-button {
+    width: 100%;
+  }
+
+  .filters-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .date-field {
+    width: 100%;
+  }
+
+  .clear-dates-button {
+    align-self: stretch;
+    justify-content: center;
+  }
+
+  .status-field {
+    width: 100%;
+  }
+
+  .survey-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .survey-card__actions {
+    padding-top: 0.75rem;
+
+    border-top: 1px solid var(--color-border);
+
+    justify-content: flex-end;
+  }
+
+}
+
+@media (max-width: 576px) {
+
+  .surveys-header {
+    padding: 1.5rem 1rem 1rem;
+  }
+
+  .surveys-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .surveys-content {
+    padding: 0 1rem 1.5rem;
+  }
+
+  .survey-card {
+    padding: 1rem;
+  }
+
+  .survey-card__title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .survey-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .survey-card__actions {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .action-button {
+    flex: 1 1 calc(50% - 0.3rem);
+    justify-content: center;
+  }
+
 }

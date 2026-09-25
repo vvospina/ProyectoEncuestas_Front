@@ -12,9 +12,14 @@
   }
 }
 
-// Estados 
+.survey-card__top {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+// Estados
 .badge-disponible {
-  background-color: var(--color-primary);
+  background-color: var(--color-secondary);
   color: #ffffff;
 }
 
@@ -30,13 +35,13 @@
 
 // Botones
 .btn-brand {
-  background-color: var(--color-primary);
+  background-color: var(--color-secondary);
   color: #ffffff;
   border: none;
   border-radius: 8px;
 
   &:hover {
-    background-color: var(--color-primary-dark);
+    background-color: var(--color-secondary-dark);
     color: #ffffff;
   }
 

@@ -1,13 +1,19 @@
 .login-page {
   min-height: 100dvh; /* alto real disponible para responsividad */
   background-color: var(--color-bg);
-  padding: 1rem;
+  padding: 1.5rem 1rem;
   overflow-y: auto;
 }
 
 .login-logo {
-  height: 15rem;
+  height: 5rem;
   object-fit: contain;
+}
+
+@media (min-width: 768px) {
+  .login-logo {
+    height: 8rem;
+  }
 }
 
 .login-card {
