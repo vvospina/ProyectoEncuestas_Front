@@ -16,11 +16,11 @@ Se creo el proyecto utilizando -- style=scss para poder hacer uso de variables y
 
 ```bash
 npm install
-npm install bootstrap firebase qrcode jsqr
+npm install bootstrap firebase qrcode
 ```
 
 - `styles.scss` ya trae el `@import` de Bootstrap, así que no necesitas tocar `angular.json` para los estilos.
-- `qrcode` se usa para **generar** los códigos QR (vista Admin); `jsqr` se usa para **leerlos** desde la cámara (vista User). Si te clonas el repo y te falta alguno, instálalo con el comando de arriba.
+- `qrcode` se usa para **generar** los códigos QR (vista Admin);
 
 
 ## 3 -- Estilos globales y colores
