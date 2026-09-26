@@ -95,4 +95,15 @@ export class EncuestasService {
       { params },
     );
   }
+    /**
+   * Usado por el escáner de QR: valida (en el backend) que la encuesta exista
+   * y esté activa/publicada, y devuelve su estructura completa (preguntas y opciones).
+   *
+   * Nota: este endpoint vive bajo /api/surveys, no bajo /api/encuestas como el
+   * resto de este servicio — por eso arma la URL desde environment.apiUrl
+   * directamente, en vez de usar this.apiUrl.
+   */
+  getSurveyByQR(surveyId: string): Observable<{ data: Encuesta }> {
+    return this.http.get<{ data: Encuesta }>(`${environment.apiUrl}/surveys/qr/${surveyId}`);
+  }
 }
