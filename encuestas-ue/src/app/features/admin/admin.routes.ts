@@ -23,6 +23,17 @@ export const ADMIN_ROUTES: Routes = [
       ),
   },
   {
+    path: 'surveys/:id/edit',
+    loadComponent: () =>
+      import('./surveys/create/create-survey').then((m) => m.CreateSurvey),
+  },
+  {
+    path: 'surveys/:id',
+    data: { mode: 'view' },
+    loadComponent: () =>
+      import('./surveys/create/create-survey').then((m) => m.CreateSurvey),
+  },
+  {
     path: 'surveys/:id/results',
     loadComponent: () =>
       import('../admin/surveys/results/survey-results/survey-results').then((m) => m.SurveyResults),
@@ -30,7 +41,7 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'surveys/:id/results/:studentId',
     loadComponent: () =>
-    import('../admin/surveys/results/student-answers/student-answers/student-answers').then(
+      import('../admin/surveys/results/student-answers/student-answers/student-answers').then(
         (m) => m.StudentAnswers,
       ),
   },

@@ -10,7 +10,6 @@ interface Survey {
   teacher: string;
   questions: number;
   status: EstadoEncuestaAdmin;
-  /** Formato ISO 'YYYY-MM-DD' para poder comparar fechas fácilmente. */
   createdAt: string;
 }
 

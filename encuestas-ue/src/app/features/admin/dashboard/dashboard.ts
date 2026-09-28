@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { EncuestaDashboard } from '../../../shared/models/encuesta-dashboard.model';
 
 interface Bar {
   label: string;
@@ -15,11 +16,6 @@ interface Question {
   bars: Bar[];
 }
 
-interface Survey {
-  id: string;
-  label: string;
-}
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -30,13 +26,19 @@ interface Survey {
 export class Dashboard {
 
   // ── Selector de encuesta ─────────────────────────────────
-  selectedSurvey = 'docente-martinez';
+  selectedSurvey = '';
+  selectedDate = '';
 
-  surveys: Survey[] = [
-    { id: 'docente-martinez', label: 'Evaluación docente - Carlos Martínez' },
-    { id: 'satisfaccion-q1',  label: 'Satisfacción del curso - Q1' },
-    { id: 'clima-2024',       label: 'Clima Laboral 2024' },
+  surveys: EncuestaDashboard[] = [
+    { survey_id: 101, title: 'Evaluación docente - Carlos Martínez', created_at: '2026-03-12', close_date: '2026-04-12', status: 'ACTIVA' },
+    { survey_id: 102, title: 'Satisfacción del curso - Q1', created_at: '2026-02-20', close_date: '2026-03-20', status: 'INACTIVA' },
+    { survey_id: 103, title: 'Clima Laboral 2026', created_at: '2026-01-15', close_date: '2026-02-15', status: 'BORRADOR' },
   ];
+
+  get filteredSurveys(): EncuestaDashboard[] {
+    if (!this.selectedDate) return this.surveys;
+    return this.surveys.filter((survey) => survey.created_at.slice(0, 10) === this.selectedDate);
+  }
 
   // ── KPIs ─────────────────────────────────────────────────
   kpis = { totalRespuestas: 80, promedio: 4.2, participacion: 85 };
@@ -114,6 +116,12 @@ export class Dashboard {
 
   selectQuestion(id: number): void {
     this.activeQuestionId = id;
+  }
+
+  onDateChange(): void {
+    if (!this.filteredSurveys.some((survey) => String(survey.survey_id) === this.selectedSurvey)) {
+      this.selectedSurvey = '';
+    }
   }
 
   onSurveyChange(_id: string): void {

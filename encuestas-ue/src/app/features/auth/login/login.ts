@@ -32,10 +32,6 @@ export class LoginComponent {
     this.auth.loginWithEmail(email, password);
   }
 
-  loginConMicrosoft(): void {
-    this.auth.loginWithMicrosoft();
-  }
-
   alternarPassword(): void {
     this.mostrarPassword.update((valorActual) => !valorActual);
   }

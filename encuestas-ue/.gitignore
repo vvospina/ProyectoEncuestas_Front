@@ -43,9 +43,8 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-# Cada dev crea sus propios environments a partir de environment.example.ts
-# (contienen llaves reales de Firebase, no se suben al repo)
+# Cada desarrollador mantiene su propia configuración de entorno local.
 src/environments/environment.ts
 src/environments/environment.development.ts
-# Firebase / entorno local
+# Configuración local
 src/environment/environment.ts

@@ -1,36 +1,35 @@
 <section class="dashboard-page">
 
   <!-- ── CABECERA ──────────────────────────────────────────── -->
-  <div class="dashboard-header">
+  <div class="dashboard-header d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-4">
     <div>
       <h1 class="dashboard-title">Resultados de encuestas</h1>
       <p class="dashboard-subtitle">Visualización y análisis de datos recopilados.</p>
     </div>
 
-    <!-- Filtros -->
-    <div class="dashboard-filters">
-      <div class="select-wrapper">
-        <select
-          id="filter-survey"
-          class="filter-select"
-          [(ngModel)]="selectedSurvey"
-          (ngModelChange)="onSurveyChange($event)">
-          @for (s of surveys; track s.id) {
-            <option [value]="s.id">{{ s.label }}</option>
-          }
-        </select>
-        <span class="material-symbols-outlined select-icon">expand_more</span>
+    <div class="dashboard-filters row g-3 align-items-end">
+      <div class="col-12 col-sm-5">
+        <label for="filter-date" class="form-label small fw-semibold">Filtrar por fecha</label>
+        <input
+          id="filter-date"
+          type="date"
+          class="form-control"
+          [(ngModel)]="selectedDate"
+          (ngModelChange)="onDateChange()">
       </div>
 
-      <div class="filter-buttons">
-        <button class="filter-btn" type="button" id="btn-filtros">
-          <span class="material-symbols-outlined">filter_list</span>
-          Filtros
-        </button>
-        <button class="filter-btn" type="button" id="btn-fecha">
-          <span class="material-symbols-outlined">calendar_today</span>
-          Fecha
-        </button>
+      <div class="col-12 col-sm-7">
+        <label for="filter-survey" class="form-label small fw-semibold">Encuesta</label>
+        <select
+          id="filter-survey"
+          class="form-select filter-select"
+          [(ngModel)]="selectedSurvey"
+          (ngModelChange)="onSurveyChange($event)">
+          <option value="">Seleccionar encuesta...</option>
+          @for (survey of filteredSurveys; track survey.survey_id) {
+            <option [value]="survey.survey_id">{{ survey.title }}</option>
+          }
+        </select>
       </div>
     </div>
   </div>
@@ -38,7 +37,7 @@
   <!-- ── KPIs ──────────────────────────────────────────────── -->
   <div class="kpi-grid">
 
-    <div class="kpi-card">
+    <div class="kpi-card shadow-sm rounded-3">
       <div class="kpi-card__top">
         <span class="kpi-card__label">TOTAL DE RESPUESTAS</span>
         <span class="material-symbols-outlined kpi-card__icon kpi-card__icon--primary">group</span>
@@ -46,7 +45,7 @@
       <div class="kpi-card__value">{{ kpis.totalRespuestas }}</div>
     </div>
 
-    <div class="kpi-card">
+    <div class="kpi-card shadow-sm rounded-3">
       <div class="kpi-card__top">
         <span class="kpi-card__label">PROMEDIO GENERAL</span>
         <span class="material-symbols-outlined kpi-card__icon kpi-card__icon--star">star</span>
@@ -57,7 +56,7 @@
       </div>
     </div>
 
-    <div class="kpi-card">
+    <div class="kpi-card shadow-sm rounded-3">
       <div class="kpi-card__top">
         <span class="kpi-card__label">% PARTICIPACIÓN</span>
         <span class="material-symbols-outlined kpi-card__icon kpi-card__icon--primary">pie_chart</span>
@@ -79,7 +78,7 @@
   <div class="charts-grid">
 
     <!-- Gráfico de barras -->
-    <div class="chart-card">
+    <div class="chart-card shadow-sm rounded-3">
       <div class="chart-card__head">
         <div>
           <h2 class="chart-card__title">{{ activeQuestion.label }}</h2>
@@ -130,7 +129,7 @@
     </div>
 
     <!-- Lista de promedios -->
-    <div class="averages-card">
+    <div class="averages-card shadow-sm rounded-3">
       <h2 class="averages-card__title">Promedios por pregunta</h2>
 
       <div class="averages-list">

@@ -10,10 +10,7 @@
       </p>
     </div>
 
-    <a
-      routerLink="/admin/surveys/create"
-      class="create-button"
-    >
+    <a routerLink="/admin/surveys/create" class="create-button">
       <i class="bi bi-plus-lg"></i>
       <span>Crear encuesta</span>
     </a>
@@ -31,12 +28,7 @@
           Desde
         </label>
 
-        <input
-          id="fecha-desde"
-          type="date"
-          [value]="fechaDesde()"
-          (change)="updateFechaDesde($event)"
-        />
+        <input id="fecha-desde" type="date" [value]="fechaDesde()" (change)="updateFechaDesde($event)" />
 
       </div>
 
@@ -46,25 +38,16 @@
           Hasta
         </label>
 
-        <input
-          id="fecha-hasta"
-          type="date"
-          [value]="fechaHasta()"
-          (change)="updateFechaHasta($event)"
-        />
+        <input id="fecha-hasta" type="date" [value]="fechaHasta()" (change)="updateFechaHasta($event)" />
 
       </div>
 
       @if (fechaDesde() || fechaHasta()) {
 
-        <button
-          type="button"
-          class="clear-dates-button"
-          (click)="limpiarFechas()"
-        >
-          <i class="bi bi-x-lg"></i>
-          <span>Limpiar fechas</span>
-        </button>
+      <button type="button" class="clear-dates-button" (click)="limpiarFechas()">
+        <i class="bi bi-x-lg"></i>
+        <span>Limpiar fechas</span>
+      </button>
 
       }
 
@@ -75,14 +58,10 @@
           Estado
         </label>
 
-        <select
-          id="survey-status"
-          [value]="selectedStatus()"
-          (change)="updateStatus($event)"
-        >
+        <select id="survey-status" [value]="selectedStatus()" (change)="updateStatus($event)">
           <option value="TODOS">Todos</option>
           @for (estado of estados; track estado.value) {
-            <option [value]="estado.value">{{ estado.label }}</option>
+          <option [value]="estado.value">{{ estado.label }}</option>
           }
         </select>
 
@@ -109,125 +88,105 @@
 
       @if (filteredSurveys().length > 0) {
 
-        @for (survey of filteredSurveys(); track survey.id) {
+      @for (survey of filteredSurveys(); track survey.id) {
 
-          <article class="survey-card">
+      <article class="survey-card">
 
-            <div class="survey-card__main">
+        <div class="survey-card__main">
 
-              <div class="survey-card__title-row">
+          <div class="survey-card__title-row">
 
-                <h3>
-                  {{ survey.name }}
-                </h3>
+            <h3>
+              {{ survey.name }}
+            </h3>
 
-                <span
-                  class="status"
-                  [class.status--active]="survey.status === 'PUBLICADA'"
-                  [class.status--draft]="survey.status === 'BORRADOR'"
-                  [class.status--closed]="survey.status === 'INACTIVA'"
-                >
-                  {{ survey.status }}
-                </span>
+            <span class="status" [class.status--active]="survey.status === 'PUBLICADA'"
+              [class.status--draft]="survey.status === 'BORRADOR'"
+              [class.status--closed]="survey.status === 'INACTIVA'">
+              {{ survey.status }}
+            </span>
 
-              </div>
+          </div>
 
 
-              <p class="survey-description">
-                {{ survey.description }}
-              </p>
+          <p class="survey-description">
+            {{ survey.description }}
+          </p>
 
 
-              <div class="survey-meta">
+          <div class="survey-meta">
 
-                <span>
-                  <i class="bi bi-person"></i>
-                  {{ survey.teacher }}
-                </span>
+            <span>
+              <i class="bi bi-person"></i>
+              {{ survey.teacher }}
+            </span>
 
-                <span>
-                  <i class="bi bi-list-check"></i>
-                  {{ survey.questions }}
-                  {{ survey.questions === 1 ? 'pregunta' : 'preguntas' }}
-                </span>
+            <span>
+              <i class="bi bi-list-check"></i>
+              {{ survey.questions }}
+              {{ survey.questions === 1 ? 'pregunta' : 'preguntas' }}
+            </span>
 
-                <span>
-                  <i class="bi bi-calendar3"></i>
-                  {{ formatDate(survey.createdAt) }}
-                </span>
+            <span>
+              <i class="bi bi-calendar3"></i>
+              {{ formatDate(survey.createdAt) }}
+            </span>
 
-              </div>
+          </div>
 
-            </div>
-
-
-            <div class="survey-card__actions">
-
-              <button
-                type="button"
-                class="action-button"
-              >
-                <i class="bi bi-eye"></i>
-                <span>Ver</span>
-              </button>
+        </div>
 
 
-              <button
-                type="button"
-                class="action-button"
-              >
-                <i class="bi bi-pencil"></i>
-                <span>Editar</span>
-              </button>
+        <div class="survey-card__actions">
 
-              <a
-                [routerLink]="['/admin/surveys', survey.id, 'results']"
-                  class="action-button"
-              >
-                <i class="bi bi-bar-chart"></i>
-                <span>Resultados</span>
-              </a>
+          <a [routerLink]="['/admin/surveys', survey.id]" class="action-button">
+            <i class="bi bi-eye"></i>
+            <span>Ver</span>
+          </a>
+
+          <a [routerLink]="['/admin/surveys', survey.id, 'edit']" class="action-button">
+            <i class="bi bi-pencil"></i>
+            <span>Editar</span>
+          </a>
+
+          <a [routerLink]="['/admin/surveys', survey.id, 'results']" class="action-button">
+            <i class="bi bi-bar-chart"></i>
+            <span>Resultados</span>
+          </a>
 
 
-              <button
-                type="button"
-                class="action-button"
-                (click)="generarQr(survey)"
-              >
-                <i class="bi bi-qr-code"></i>
-                <span>Generar código QR</span>
-              </button>
+          <button type="button" class="action-button" (click)="generarQr(survey)">
+            <i class="bi bi-qr-code"></i>
+            <span>Generar código QR</span>
+          </button>
 
-            </div>
+        </div>
 
-          </article>
+      </article>
 
-        }
+      }
 
       } @else {
 
-        <div class="empty-state">
+      <div class="empty-state">
 
-          <div class="empty-state__icon">
-            <i class="bi bi-clipboard-x"></i>
-          </div>
-
-          <h3>
-            No encontramos encuestas
-          </h3>
-
-          <p>
-            Intenta cambiar los filtros o crea una nueva encuesta.
-          </p>
-
-          <a
-            routerLink="/admin/surveys/create"
-            class="empty-state__button"
-          >
-            Crear encuesta
-          </a>
-
+        <div class="empty-state__icon">
+          <i class="bi bi-clipboard-x"></i>
         </div>
+
+        <h3>
+          No encontramos encuestas
+        </h3>
+
+        <p>
+          Intenta cambiar los filtros o crea una nueva encuesta.
+        </p>
+
+        <a routerLink="/admin/surveys/create" class="empty-state__button">
+          Crear encuesta
+        </a>
+
+      </div>
 
       }
 
@@ -236,79 +195,65 @@
   </main>
 
 
-    <!-- ================================
+  <!-- ================================
        MODAL DE CÓDIGO QR
   ================================= -->
 
   @if (qrSurvey(); as survey) {
 
-    <div class="qr-modal-overlay" (click)="cerrarQr()">
+  <div class="qr-modal-overlay" (click)="cerrarQr()">
 
-      <div class="qr-modal" (click)="$event.stopPropagation()">
+    <div class="qr-modal" (click)="$event.stopPropagation()">
 
-        <header class="qr-modal__header">
+      <header class="qr-modal__header">
 
-          <h3>Código QR</h3>
+        <h3>Código QR</h3>
 
-          <button
-            type="button"
-            class="qr-modal__close"
-            (click)="cerrarQr()"
-            aria-label="Cerrar"
-          >
-            ×
-          </button>
+        <button type="button" class="qr-modal__close" (click)="cerrarQr()" aria-label="Cerrar">
+          ×
+        </button>
 
-        </header>
+      </header>
 
-        <p class="qr-modal__survey-name">
-          {{ survey.name }}
-        </p>
+      <p class="qr-modal__survey-name">
+        {{ survey.name }}
+      </p>
 
-        <div class="qr-modal__image">
+      <div class="qr-modal__image">
 
-          @if (qrLoading()) {
+        @if (qrLoading()) {
 
-            <span class="qr-modal__loading">
-              Generando código...
-            </span>
+        <span class="qr-modal__loading">
+          Generando código...
+        </span>
 
-          } @else if (qrDataUrl()) {
+        } @else if (qrDataUrl()) {
 
-            <img [src]="qrDataUrl()!" alt="Código QR de la encuesta" />
+        <img [src]="qrDataUrl()!" alt="Código QR de la encuesta" />
 
-          }
+        }
 
-        </div>
+      </div>
 
-        <p class="qr-modal__hint">
-          Los estudiantes que escaneen este código irán directo a responder la encuesta.
-        </p>
+      <p class="qr-modal__hint">
+        Los estudiantes que escaneen este código irán directo a responder la encuesta.
+      </p>
 
-        <div class="qr-modal__actions">
+      <div class="qr-modal__actions">
 
-          <button
-            type="button"
-            class="secondary-button"
-            (click)="cerrarQr()"
-          >
-            Cerrar
-          </button>
+        <button type="button" class="secondary-button" (click)="cerrarQr()">
+          Cerrar
+        </button>
 
-          <button
-            type="button"
-            class="primary-button"
-            [disabled]="!qrDataUrl()"
-            (click)="descargarQr()"
-          >
-            Descargar PNG
-          </button>
-
-        </div>
+        <button type="button" class="primary-button" [disabled]="!qrDataUrl()" (click)="descargarQr()">
+          Descargar PNG
+        </button>
 
       </div>
 
     </div>
+
+  </div>
 
   }
 

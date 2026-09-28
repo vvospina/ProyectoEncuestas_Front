@@ -5,14 +5,14 @@ import { AuthService } from './auth.service';
 
 /**
  * Un "interceptor" revisa TODAS las peticiones
- * que salen hacia el backend y les agrega el token de Firebase antes
+ * que salen hacia el backend y les agrega el token REST almacenado antes
  * de que se vayan. Así ningún componente tiene que acordarse de
  * poner el header manualmente.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
 
-  return from(auth.getIdToken()).pipe(
+  return from(auth.getAccessToken()).pipe(
     switchMap((token) => {
       if (!token) {
         return next(req);
