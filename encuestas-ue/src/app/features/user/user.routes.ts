@@ -20,6 +20,10 @@ export const USER_ROUTES: Routes = [
     path: 'available-surveys',
     component: AvailableSurveysComponent,
   },
+  {
+    path: 'scan-qr',
+    loadComponent: () => import('./scan-qr/scan-qr').then(m => m.ScanQrComponent)
+  },
 
   // Diligenciar una encuesta específica (F07)
   {

@@ -1,0 +1,131 @@
+.scan-qr-container {
+  padding: 1.5rem 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+
+  .header-section {
+    .main-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #1e1e1e;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: #6c757d;
+    }
+  }
+
+  .btn-qr-icon {
+    background-color: var(--color-secondary, #1a4fd0);
+    color: #ffffff;
+    border: none;
+    width: 44px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+
+    &:hover {
+    filter: brightness(0.9);
+    transform: translateX(-3px); 
+  }
+  }
+
+  .scan-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    background-color: #ffffff;
+  }
+
+  /* Pestañas (Tabs) */
+  .tabs-header {
+    border-bottom: none;
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333333;
+      padding-bottom: 8px;
+      position: relative;
+      cursor: pointer;
+      transition: color 0.2s ease;
+
+      &.active {
+        color: #1e1e1e;
+
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 3px;
+          background-color: #333333;
+          border-radius: 2px;
+        }
+      }
+    }
+  }
+
+  /* Visor de Cámara */
+  .video-container {
+    width: 100%;
+    max-width: 650px;
+    height: 320px;
+    margin: 0 auto;
+    border-radius: 18px;
+    overflow: hidden;
+    background-color: #8c8c8c;
+
+    .placeholder-box {
+      width: 100%;
+      height: 100%;
+      background-color: #8c8c8c;
+    }
+
+    .qr-canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  /* Formulario Manual */
+  .manual-content {
+    max-width: 550px;
+
+    .custom-input {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+
+      &:focus {
+        border-color: var(--color-secondary, #1a4fd0);
+        box-shadow: 0 0 0 3px rgba(26, 79, 208, 0.1);
+      }
+    }
+  }
+
+  /* Botón de Acción Principal */
+  .btn-action-blue {
+    background-color: var(--color-secondary, #1a4fd0);
+    color: #ffffff;
+    border: none;
+    font-weight: 600;
+    border-radius: 8px;
+    min-width: 220px;
+    transition: filter 0.2s ease;
+
+    &:hover:not(:disabled) {
+      filter: brightness(0.9);
+    }
+  }
+}

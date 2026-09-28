@@ -70,4 +70,8 @@ export class AvailableSurveysComponent implements OnInit {
       case 'COMPLETADO': return 'badge-completado';
     }
   }
+  abrirEscaner() {
+    // Navega a la ruta registrada para el escáner del usuario
+    this.router.navigate(['/user/scan-qr']);
+  }
 }
