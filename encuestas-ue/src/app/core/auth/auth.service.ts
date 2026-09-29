@@ -234,4 +234,19 @@ export class AuthService {
       this.loading.set(false);
     }
   }
+
+
+  async resetPasswordConfirm(token: string, newPassword: string): Promise<void> {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    try {
+      await firstValueFrom(this.http.post(`${this.apiUrl}/reset-password`, { token, newPassword }));
+      Swal.fire('¡Éxito!', 'Tu contraseña ha sido actualizada correctamente. Ya puedes iniciar sesión.', 'success');
+      this.router.navigate(['/login']);
+    } catch (error: any) {
+      this.errorMessage.set(error.error?.error || 'No se pudo actualizar la contraseña. Intenta enviar otro correo de recuperación.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
 }

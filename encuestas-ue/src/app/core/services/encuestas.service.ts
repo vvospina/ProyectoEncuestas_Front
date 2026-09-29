@@ -58,7 +58,6 @@ export class EncuestasService {
 
     return this.http.get<any>(this.apiUrl, this.getOptions(params)).pipe(
       map(response => {
-        console.log('Respuesta cruda del backend:', JSON.stringify(response, null, 2));
 
         const lista = Array.isArray(response) ? response : (response?.data || response?.encuestas || response?.items || []);
 
@@ -191,8 +190,9 @@ export class EncuestasService {
   }
 
   /** Estudiantes que ya respondieron una encuesta específica. */
+  /** Estudiantes que ya respondieron una encuesta específica. */
   listarEstudiantesQueRespondieron(encuestaId: string): Observable<EstudianteEncuestado[]> {
-    return this.http.get<EstudianteEncuestado[]>(`${this.apiUrl}/${encuestaId}/estudiantes`);
+    return this.http.get<EstudianteEncuestado[]>(`${this.apiUrl}/${encuestaId}/estudiantes`, this.getOptions());
   }
 
   /** Respuestas de un estudiante puntual para una encuesta, con filtro de fechas opcional. */
@@ -207,10 +207,9 @@ export class EncuestasService {
 
     return this.http.get<RespuestaPregunta[]>(
       `${this.apiUrl}/${encuestaId}/estudiantes/${estudianteId}/respuestas`,
-      { params },
+      this.getOptions(params),
     );
   }
-
   /**
    * Usado por el escáner de QR: valida (en el backend) que la encuesta exista
    * y esté activa/publicada, y devuelve su estructura completa (preguntas y opciones).
@@ -219,7 +218,13 @@ export class EncuestasService {
    * resto de este servicio — por eso arma la URL desde environment.apiUrl
    * directamente, en vez de usar this.apiUrl.
    */
-  getSurveyByQR(surveyId: string): Observable<{ data: Encuesta }> {
-    return this.http.get<{ data: Encuesta }>(`${environment.apiUrl}/surveys/qr/${surveyId}`);
+  getSurveyByQR(surveyId: string): Observable<any> {
+    // Reutilizamos GET /api/surveys/:id para validar que la encuesta exista antes de abrirla
+    return this.http.get<any>(`${this.apiUrl}/${surveyId}`, this.getOptions());
+  }
+
+  /** Trae todas las respuestas crudas de una encuesta para calcular estadísticas en el Dashboard */
+  obtenerResultadosBrutos(encuestaId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${encuestaId}/responses`, this.getOptions());
   }
 }

@@ -1,6 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { EstudianteEncuestado } from '../../../../../shared/models/estudiante-encuestado.model';
+import { EncuestasService } from '../../../../../core/services/encuestas.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-survey-results',
@@ -8,41 +10,36 @@ import { EstudianteEncuestado } from '../../../../../shared/models/estudiante-en
   templateUrl: './survey-results.html',
   styleUrl: './survey-results.scss',
 })
-export class SurveyResults {
+export class SurveyResults implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly encuestasService = inject(EncuestasService);
 
   protected readonly encuestaId = this.route.snapshot.paramMap.get('id') ?? '';
+  protected readonly encuestaNombre = signal('Detalle de Resultados');
+  protected readonly estudiantes = signal<EstudianteEncuestado[]>([]);
 
-  /**
-   * Datos temporales para la interfaz.
-   * Cuando el backend esté listo, se tiene que ver algo así:
-   * this.encuestasService.listarEstudiantesQueRespondieron(this.encuestaId)
-   */
-  protected readonly encuestaNombre = signal('Evaluación Docente 2026-2');
+  ngOnInit(): void {
+    if (this.encuestaId) {
+      this.cargarEstudiantes();
+    }
+  }
 
-  protected readonly estudiantes = signal<EstudianteEncuestado[]>([
-    {
-      estudianteId: 'est-001',
-      nombre: 'Luis Martinez',
-      correo: 'lmarnineza@uniempresarial.edu.co',
-      fechaRespuesta: '2026-08-24',
-    },
-    {
-      estudianteId: 'est-002',
-      nombre: 'Zullie Diaz',
-      correo: 'zdiaz@uniempresarial.edu.co',
-      fechaRespuesta: '2026-08-25',
-    },
-    {
-      estudianteId: 'est-003',
-      nombre: 'Malory Farfan',
-      correo: 'mfarfan@uniempresarial.edu.co',
-      fechaRespuesta: '2026-08-25',
-    },
-  ]);
+  private cargarEstudiantes(): void {
+    this.encuestasService.listarEstudiantesQueRespondieron(this.encuestaId).subscribe({
+      next: (data) => {
+        this.estudiantes.set(data);
+      },
+      error: (err) => {
+        console.error('Error al cargar estudiantes:', err);
+        Swal.fire('Error', 'No se pudieron cargar los estudiantes que respondieron.', 'error');
+      }
+    });
+  }
 
   protected formatDate(iso: string): string {
-    const [year, month, day] = iso.split('-').map(Number);
+    if (!iso) return '';
+    const datePart = iso.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
     return new Date(year, month - 1, day).toLocaleDateString('es-CO', {
       day: '2-digit',
       month: 'short',

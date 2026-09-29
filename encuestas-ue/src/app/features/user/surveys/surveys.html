@@ -32,7 +32,7 @@
         <ng-container *ngIf="preguntaActual?.opciones?.length; else preguntaAbierta">
           <div class="d-flex flex-column w-100">
             <button *ngFor="let op of preguntaActual.opciones" type="button"
-              class="btn btn-outline-primary btn-rounded-custom mb-2" [class.active]="respuestaSeleccionada === op.id"
+              class="btn btn-outline-primary btn-rounded-custom mb-2" [class.active]="estaSeleccionada(op.id)"
               (click)="seleccionarCalificacion(op.id)">
               {{ op.texto }}
             </button>

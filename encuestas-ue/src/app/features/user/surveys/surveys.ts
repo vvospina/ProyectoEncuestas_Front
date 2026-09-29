@@ -24,7 +24,7 @@ export class SurveysComponent implements OnInit {
 
   indicePreguntaActual = 0;
   opcionesCalificacion = [1, 2, 3, 4, 5];
-  respuestasGuardadas: { [preguntaId: string]: number } = {};
+  respuestasGuardadas: { [preguntaId: string]: number[] } = {};
   respuestasTexto: { [preguntaId: string]: string } = {};
 
   constructor(
@@ -67,7 +67,7 @@ export class SurveysComponent implements OnInit {
     const p = this.preguntaActual;
     if (!p) return false;
     if (!p.requerida) return true;
-    if (p.opciones?.length) return !!this.respuestasGuardadas[p.id];
+    if (p.opciones?.length) return (this.respuestasGuardadas[p.id]?.length ?? 0) > 0;
     return !!(this.respuestasTexto[p.id] || '').trim();
   }
 
@@ -76,10 +76,11 @@ export class SurveysComponent implements OnInit {
     if (id) this.respuestasTexto[id] = valor;
   }
 
-  get respuestaSeleccionada(): number | null {
-    if (!this.encuesta || !this.encuesta.preguntas || this.encuesta.preguntas.length === 0) return null;
-    const idPreguntaActual = this.encuesta.preguntas[this.indicePreguntaActual].id;
-    return this.respuestasGuardadas[idPreguntaActual] || null;
+  /** Indica si esa opción está marcada para la pregunta actual (sirve para pintar el botón activo). */
+  estaSeleccionada(valor: number): boolean {
+    const p = this.preguntaActual;
+    if (!p) return false;
+    return (this.respuestasGuardadas[p.id] ?? []).includes(valor);
   }
 
   get numeroPreguntaVisual(): number {
@@ -100,8 +101,20 @@ export class SurveysComponent implements OnInit {
   }
 
   seleccionarCalificacion(valor: number): void {
-    const idPreguntaActual = this.encuesta.preguntas[this.indicePreguntaActual].id;
-    this.respuestasGuardadas[idPreguntaActual] = valor;
+    const p = this.preguntaActual;
+    if (!p) return;
+    const actuales = this.respuestasGuardadas[p.id] ?? [];
+
+    if (p.tipo === 'Seleccion Multiple') {
+      // Selección múltiple: se puede marcar más de una opción, así que alternamos
+      // (agregamos si no estaba, la quitamos si ya estaba) sin borrar las demás.
+      this.respuestasGuardadas[p.id] = actuales.includes(valor)
+        ? actuales.filter((v) => v !== valor)
+        : [...actuales, valor];
+    } else {
+      // Escala (u otro tipo de opción única): una sola respuesta por pregunta.
+      this.respuestasGuardadas[p.id] = [valor];
+    }
   }
 
   siguienteOFinalizar(): void {
@@ -123,11 +136,14 @@ export class SurveysComponent implements OnInit {
 
     for (let i = 0; i < this.encuesta.preguntas.length; i++) {
       const p: any = this.encuesta.preguntas[i];
-      const optionId = this.respuestasGuardadas[p.id];
+      const opcionesSeleccionadas = this.respuestasGuardadas[p.id] ?? [];
       const texto = (this.respuestasTexto[p.id] || '').trim();
 
-      if (optionId) {
-        details.push({ questionId: Number(p.id), optionId });
+      if (opcionesSeleccionadas.length > 0) {
+        // Una fila por cada opción marcada; en Escala solo habrá una.
+        opcionesSeleccionadas.forEach((optionId) => {
+          details.push({ questionId: Number(p.id), optionId });
+        });
       } else if (texto) {
         details.push({ questionId: Number(p.id), responseText: texto });
       } else if (p.requerida) {
@@ -156,12 +172,17 @@ export class SurveysComponent implements OnInit {
           timerProgressBar: false,
         });
 
-        setTimeout(() => this.router.navigate(['/user/available-surveys']), 1500);
+        //  Redirigimos a la ruta "completada" en lugar de al listado general
+        setTimeout(() => {
+          this.router.navigate(
+            ['/user/responder-encuesta', this.encuesta.id, 'completada'],
+            { queryParams: { total: this.encuesta.preguntas.length } }
+          );
+        }, 1500);
       },
       error: (err: any) => {
         console.error('Error al enviar respuestas:', err);
-        Swal.fire('Error', err.error?.error || 'Hubo un problema al enviar la encuesta al servidor', 'error');
-
+        Swal.fire('Error', 'Hubo un problema al enviar la encuesta al servidor', 'error');
       }
     });
   }

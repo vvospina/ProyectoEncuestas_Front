@@ -1,6 +1,8 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { RespuestaPregunta } from '../../../../../../shared/models/respuesta-pregunta.model'
+import { RespuestaPregunta } from '../../../../../../shared/models/respuesta-pregunta.model';
+import { EncuestasService } from '../../../../../../core/services/encuestas.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-student-answers',
@@ -8,8 +10,9 @@ import { RespuestaPregunta } from '../../../../../../shared/models/respuesta-pre
   templateUrl: './student-answers.html',
   styleUrl: './student-answers.scss',
 })
-export class StudentAnswers {
+export class StudentAnswers implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly encuestasService = inject(EncuestasService);
 
   protected readonly encuestaId = this.route.snapshot.paramMap.get('id') ?? '';
   protected readonly estudianteId = this.route.snapshot.paramMap.get('studentId') ?? '';
@@ -17,45 +20,40 @@ export class StudentAnswers {
   protected readonly fechaDesde = signal('');
   protected readonly fechaHasta = signal('');
 
-  /**
-   * Datos temporales para construir la interfaz.
-   * Cuando el backend esté listo, se tendrá que ver algo así:
-   * this.encuestasService.obtenerRespuestasEstudiante(this.encuestaId, this.estudianteId, { desde, hasta })
-   */
-  protected readonly estudianteNombre = signal('Laura Ramírez');
-  protected readonly estudianteCorreo = signal('laura.ramirez@uniempresarial.edu.co');
+  protected readonly estudianteNombre = signal('Estudiante');
+  protected readonly estudianteCorreo = signal('estudiante@uniempresarial.edu.co');
 
-  protected readonly respuestas = signal<RespuestaPregunta[]>([
-    {
-      preguntaId: 'preg-001',
-      preguntaTexto: 'El docente demuestra dominio del tema impartido.',
-      tipoPregunta: 'ESCALA',
-      respuesta: '5',
-      fechaRespuesta: '2026-08-24',
-    },
-    {
-      preguntaId: 'preg-002',
-      preguntaTexto: '¿Qué aspecto de la metodología del docente destacarías?',
-      tipoPregunta: 'ABIERTA',
-      respuesta: 'Explica con ejemplos de la vida real y resuelve dudas con paciencia.',
-      fechaRespuesta: '2026-08-24',
-    },
-    {
-      preguntaId: 'preg-003',
-      preguntaTexto: '¿Con qué frecuencia el docente llegó puntual a clase?',
-      tipoPregunta: 'SELECCION_MULTIPLE',
-      respuesta: 'Siempre',
-      fechaRespuesta: '2026-08-24',
-    },
-  ]);
+  protected readonly respuestas = signal<RespuestaPregunta[]>([]);
+
+  ngOnInit(): void {
+    if (this.encuestaId && this.estudianteId) {
+      this.cargarRespuestasEstudiante();
+    }
+  }
+
+  private cargarRespuestasEstudiante(): void {
+    const desde = this.fechaDesde() || undefined;
+    const hasta = this.fechaHasta() || undefined;
+
+    this.encuestasService.obtenerRespuestasEstudiante(this.encuestaId, this.estudianteId, { desde, hasta }).subscribe({
+      next: (data) => {
+        this.respuestas.set(data);
+      },
+      error: (err) => {
+        console.error('Error al cargar respuestas del estudiante:', err);
+        Swal.fire('Error', 'No se pudieron cargar las respuestas del estudiante.', 'error');
+      }
+    });
+  }
 
   protected readonly respuestasFiltradas = computed(() => {
     const desde = this.fechaDesde();
     const hasta = this.fechaHasta();
 
     return this.respuestas().filter((respuesta) => {
-      const matchesDesde = !desde || respuesta.fechaRespuesta >= desde;
-      const matchesHasta = !hasta || respuesta.fechaRespuesta <= hasta;
+      const fechaResp = respuesta.fechaRespuesta ? respuesta.fechaRespuesta.split('T')[0] : '';
+      const matchesDesde = !desde || fechaResp >= desde;
+      const matchesHasta = !hasta || fechaResp <= hasta;
       return matchesDesde && matchesHasta;
     });
   });
@@ -78,10 +76,13 @@ export class StudentAnswers {
   protected etiquetaTipo(tipo: string): string {
     switch (tipo) {
       case 'ESCALA':
+      case 'Escala':
         return 'Escala 1 - 5';
       case 'ABIERTA':
+      case 'Abierta':
         return 'Respuesta abierta';
       case 'SELECCION_MULTIPLE':
+      case 'Seleccion Multiple':
         return 'Selección múltiple';
       default:
         return tipo;
@@ -89,7 +90,9 @@ export class StudentAnswers {
   }
 
   protected formatDate(iso: string): string {
-    const [year, month, day] = iso.split('-').map(Number);
+    if (!iso) return '';
+    const datePart = iso.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
     return new Date(year, month - 1, day).toLocaleDateString('es-CO', {
       day: '2-digit',
       month: 'short',
