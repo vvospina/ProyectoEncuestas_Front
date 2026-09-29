@@ -40,8 +40,9 @@ export const adminGuard: CanActivateFn = async () => {
   // Obtenemos el usuario actual del servicio de autenticación
   const usuario = auth.currentUser(); // Asegúrate de que tu AuthService exponga el usuario actual
 
-  // Si tiene sesión activa y su roleId es 1 (ADMIN), lo dejamos pasar
-  if (auth.tieneSesionActiva() && usuario?.roleId === 1) {
+  // Si tiene sesión activa y su rol es ADMIN (roleId: 1), lo dejamos pasar
+  const esAdmin = Number(usuario?.roleId ?? usuario?.role_id) === 1 || auth.userRole() === 'ADMIN';
+  if (auth.tieneSesionActiva() && esAdmin) {
     return true;
   }
 

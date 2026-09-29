@@ -1,23 +1,20 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { EncuestaDisponible, EstadoEncuesta } from '../../../shared/models/encuesta-disponible.model';
 import { EncuestasService } from '../../../core/services/encuestas.service';
-import { Html5Qrcode } from 'html5-qrcode';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-available-surveys',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './available-surveys.html',
   styleUrls: ['./available-surveys.scss']
 })
-export class AvailableSurveysComponent implements OnInit, OnDestroy {
+export class AvailableSurveysComponent implements OnInit {
 
   encuestas: EncuestaDisponible[] = [];
-  isScanning = false;
-  private html5QrCode: Html5Qrcode | null = null;
 
   constructor(
     private router: Router,
@@ -27,10 +24,6 @@ export class AvailableSurveysComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.cargarEncuestasReales();
-  }
-
-  ngOnDestroy(): void {
-    this.detatarEscaneo();
   }
 
   cargarEncuestasReales(): void {
@@ -61,8 +54,12 @@ export class AvailableSurveysComponent implements OnInit, OnDestroy {
       case 'COMPLETADO': return 'badge-completado';
     }
   }
-  abrirEscaner() {
-    // Navega a la ruta registrada para el escáner del usuario
+
+  abrirEscaner(): void {
     this.router.navigate(['/user/scan-qr']);
+  }
+
+  escanearQR(): void {
+    this.abrirEscaner();
   }
 }
