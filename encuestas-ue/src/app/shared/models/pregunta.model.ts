@@ -11,6 +11,7 @@ export interface Pregunta {
   id: string;
   texto: string;
   tipo: TipoPregunta;
+  enunciado: string;
   /** Solo aplica si tipo === 'SELECCION_MULTIPLE' */
   opciones?: string[];
   requerida: boolean;

@@ -1,65 +1,56 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { EncuestaDisponible, EstadoEncuesta } from '../../../shared/models/encuesta-disponible.model';
+import { EncuestasService } from '../../../core/services/encuestas.service';
+import { Html5Qrcode } from 'html5-qrcode';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-available-surveys',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './available-surveys.html',
   styleUrls: ['./available-surveys.scss']
 })
-export class AvailableSurveysComponent implements OnInit {
+export class AvailableSurveysComponent implements OnInit, OnDestroy {
 
   encuestas: EncuestaDisponible[] = [];
+  isScanning = false;
+  private html5QrCode: Html5Qrcode | null = null;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private encuestasService: EncuestasService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
-    this.cargarEncuestasMock();
+    this.cargarEncuestasReales();
   }
 
-  cargarEncuestasMock(): void {
-    this.encuestas = [
-      {
-        id: 'enc-001',
-        titulo: 'Evaluación docente',
-        subtitulo: 'Profesor: Carlos Martínez',
-        iconoSubtitulo: 'person',
-        estado: 'DISPONIBLE',
-        descripcion: 'Evaluación de desempeño correspondiente al primer semestre académico. Tu opinión es fundamental para la mejora continua.',
-        totalPreguntas: 10,
-        fechaTexto: 'Disponible hasta: 15 Dic',
-        completada: false
+  ngOnDestroy(): void {
+    this.detatarEscaneo();
+  }
+
+  cargarEncuestasReales(): void {
+    this.encuestasService.obtenerEncuestasDisponibles().subscribe({
+      next: (data) => {
+        this.encuestas = data;
+        this.cdr.detectChanges();
       },
-      {
-        id: 'enc-002',
-        titulo: 'Infraestructura y Servicios',
-        subtitulo: 'Campus Central',
-        iconoSubtitulo: 'domain',
-        estado: 'PENDIENTE',
-        descripcion: 'Encuesta anual sobre la calidad de las instalaciones, biblioteca, cafetería y servicios generales del campus.',
-        totalPreguntas: 15,
-        fechaTexto: 'Disponible hasta: 18 Dic',
-        completada: false
-      },
-      {
-        id: 'enc-003',
-        titulo: 'Satisfacción Estudiantil',
-        subtitulo: 'Bienestar Universitario',
-        iconoSubtitulo: 'school',
-        estado: 'COMPLETADO',
-        descripcion: 'Evaluación de los programas de bienestar y apoyo al estudiante. Gracias por tu participación.',
-        totalPreguntas: 8,
-        fechaTexto: 'Completada el 10 Dic',
-        completada: true
+      error: (err) => {
+        console.error('Error al cargar encuestas desde la base de datos:', err);
       }
-    ];
+    });
   }
 
   responderEncuesta(id: string): void {
-    // Redirige a la pantalla de la encuesta (Prueba)
+    const encuesta = this.encuestas.find(e => e.id === id);
+    if (encuesta?.completada) {
+      Swal.fire('Encuesta completada', 'Ya respondiste esta encuesta. Solo se permite un intento.', 'info');
+      return;
+    }
     this.router.navigate(['/user/responder-encuesta', id]);
   }
 

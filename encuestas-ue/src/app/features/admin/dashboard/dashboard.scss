@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&display=swap');
-
 :host { display: block; }
 
 /* ── Variables locales ──────────────────────────────────── */
@@ -16,7 +14,7 @@ $border:     rgba(146, 111, 107, 0.2);
   padding: 2rem 1.5rem 5rem;
   max-width: 1200px;
   margin: 0 auto;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--font-body);
 }
 
 /* ── Cabecera ───────────────────────────────────────────── */
@@ -35,91 +33,24 @@ $border:     rgba(146, 111, 107, 0.2);
 
 .dashboard-title {
   margin: 0 0 0.25rem;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-size: 1.75rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  color: $navy;
+  color: var(--color-neutral);
 }
 
 .dashboard-subtitle {
   margin: 0;
-  font-size: 1.125rem;
-  color: $muted;
+  font-size: 1rem;
+  color: var(--color-muted);
 }
 
 /* ── Filtros ────────────────────────────────────────────── */
 .dashboard-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-
-  @media (min-width: 480px) {
-    flex-direction: row;
-    align-items: center;
-  }
-}
-
-.select-wrapper {
-  position: relative;
-  width: 100%;
-
-  @media (min-width: 480px) { width: 16rem; }
+  width: min(100%, 34rem);
 }
 
 .filter-select {
-  width: 100%;
-  appearance: none;
-  background-color: #F4F4F7;
-  border: 1px solid #D1D1D6;
-  border-radius: 0.5rem;
-  padding: 0.75rem 2.5rem 0.75rem 1rem;
-  font-family: inherit;
-  font-size: 0.9rem;
-  color: $navy;
-  cursor: pointer;
-  transition: border-color 0.2s;
-
-  &:focus {
-    outline: none;
-    border-color: $primary;
-    box-shadow: 0 0 0 2px rgba(238, 40, 43, 0.15);
-  }
-}
-
-.select-icon {
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: $muted;
-  font-size: 1.25rem;
-}
-
-.filter-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.filter-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.7rem 1rem;
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: 0.5rem;
-  font-family: inherit;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: $primary;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  .material-symbols-outlined { font-size: 1rem; }
-
-  &:hover { background-color: #F4F4F7; }
+  min-width: 0;
 }
 
 /* ── Grid KPIs ──────────────────────────────────────────── */
@@ -140,10 +71,7 @@ $border:     rgba(146, 111, 107, 0.2);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 4px 20px rgba(19, 32, 62, 0.08);
-  transition: box-shadow 0.3s ease;
-
-  &:hover { box-shadow: 0 8px 30px rgba(19, 32, 62, 0.12); }
+  border: 1px solid var(--color-border);
 }
 
 .kpi-card__top {
@@ -214,7 +142,7 @@ $border:     rgba(146, 111, 107, 0.2);
   background: $surface;
   border-radius: 0.75rem;
   padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(19, 32, 62, 0.08);
+  border: 1px solid var(--color-border);
 }
 
 .chart-card__head {
@@ -371,7 +299,7 @@ $border:     rgba(146, 111, 107, 0.2);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 20px rgba(19, 32, 62, 0.08);
+  border: 1px solid var(--color-border);
   max-height: 32rem;
 
   @media (min-width: 1024px) { height: 100%; }

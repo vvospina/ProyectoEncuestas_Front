@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { Encuesta } from '../../../shared/models/encuesta.models';
+import { EncuestasService } from '../../../core/services/encuestas.service';
 
 @Component({
   selector: 'app-surveys',
@@ -11,59 +13,74 @@ import { Encuesta } from '../../../shared/models/encuesta.models';
   styleUrls: ['./surveys.scss']
 })
 export class SurveysComponent implements OnInit {
-  encuesta!: Encuesta;
+  // Inicializamos el objeto con valores por defecto para evitar errores de "undefined" al cargar
+  encuesta: Encuesta = {
+    id: '',
+    titulo: 'Cargando encuesta...',
+    descripcion: '',
+    profesor: { nombre: 'Cargando...' },
+    preguntas: []
+  } as any;
+
   indicePreguntaActual = 0;
   opcionesCalificacion = [1, 2, 3, 4, 5];
-  respuestasGuardadas: { [preguntaId: string]: number } = {};
+  respuestasGuardadas: { [preguntaId: string]: number[] } = {};
+  respuestasTexto: { [preguntaId: string]: string } = {};
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    private encuestasService: EncuestasService
+  ) {}
 
   ngOnInit(): void {
-    this.cargarEncuestaMock();
+    const id = Object.values(this.route.snapshot.params)[0] as string | undefined;
+    if (!id) {
+      this.router.navigate(['/user/available-surveys']);
+      return;
+    }
+
+    this.encuestasService.obtenerEncuestaParaResponder(id).subscribe({
+      next: (encuesta) => {
+        this.encuesta = encuesta;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error al cargar la encuesta:', err);
+        Swal.fire('Error', 'No se pudo cargar la encuesta.', 'error');
+      }
+    });
   }
 
-  cargarEncuestaMock(): void {
-  this.encuesta = {
-    id: 'enc-001',
-    titulo: 'Evaluación del profesor',
-    tipo: 'DOCENTE',
-    profesor: {
-      id: 'prof-01',
-      nombre: 'Carlos Martínez',
-      estado: 'Activo',
-      categoria: 'Profesores'
-    },
-    preguntas: [
-      { 
-        id: 'q1', 
-        texto: 'El profesor explica claramente los temas tratados durante la clase.', 
-        tipo: 'ESCALA',
-        requerida: true,
-        displayOrder: 1,
-        estado: 'ACTIVA'
-      },
-      { 
-        id: 'q2', 
-        texto: 'El profesor resuelve las dudas de manera oportuna.', 
-        tipo: 'ESCALA',
-        requerida: true,
-        displayOrder: 2,
-        estado: 'ACTIVA'
-      },
-      { 
-        id: 'q3', 
-        texto: 'El material de apoyo es útil y actualizado.', 
-        tipo: 'ESCALA',
-        requerida: true,
-        displayOrder: 3,
-        estado: 'ACTIVA'
-      }
-    ]
-  };
-}
+  get preguntaActual(): any {
+    return this.encuesta?.preguntas?.[this.indicePreguntaActual];
+  }
 
-  get respuestaSeleccionada(): number | null {
-    if (!this.encuesta) return null;
-    const idPreguntaActual = this.encuesta.preguntas[this.indicePreguntaActual].id;
-    return this.respuestasGuardadas[idPreguntaActual] || null;
+  get textoRespuestaActual(): string {
+    const id = this.preguntaActual?.id;
+    return id ? (this.respuestasTexto[id] ?? '') : '';
+  }
+
+  // Habilita SIGUIENTE/FINALIZAR: las opcionales siempre, las requeridas solo si ya tienen respuesta
+  get puedeContinuar(): boolean {
+    const p = this.preguntaActual;
+    if (!p) return false;
+    if (!p.requerida) return true;
+    if (p.opciones?.length) return (this.respuestasGuardadas[p.id]?.length ?? 0) > 0;
+    return !!(this.respuestasTexto[p.id] || '').trim();
+  }
+
+  actualizarTexto(valor: string): void {
+    const id = this.preguntaActual?.id;
+    if (id) this.respuestasTexto[id] = valor;
+  }
+
+  /** Indica si esa opción está marcada para la pregunta actual (sirve para pintar el botón activo). */
+  estaSeleccionada(valor: number): boolean {
+    const p = this.preguntaActual;
+    if (!p) return false;
+    return (this.respuestasGuardadas[p.id] ?? []).includes(valor);
   }
 
   get numeroPreguntaVisual(): number {
@@ -71,12 +88,12 @@ export class SurveysComponent implements OnInit {
   }
 
   get progresoPorcentaje(): number {
-    if (!this.encuesta) return 0;
+    if (!this.encuesta || !this.encuesta.preguntas || this.encuesta.preguntas.length === 0) return 0;
     return (this.numeroPreguntaVisual / this.encuesta.preguntas.length) * 100;
   }
 
   get esUltimaPregunta(): boolean {
-    return !!this.encuesta && this.indicePreguntaActual === this.encuesta.preguntas.length - 1;
+    return !!this.encuesta && !!this.encuesta.preguntas && this.indicePreguntaActual === this.encuesta.preguntas.length - 1;
   }
 
   get esPrimeraPregunta(): boolean {
@@ -84,8 +101,20 @@ export class SurveysComponent implements OnInit {
   }
 
   seleccionarCalificacion(valor: number): void {
-    const idPreguntaActual = this.encuesta.preguntas[this.indicePreguntaActual].id;
-    this.respuestasGuardadas[idPreguntaActual] = valor;
+    const p = this.preguntaActual;
+    if (!p) return;
+    const actuales = this.respuestasGuardadas[p.id] ?? [];
+
+    if (p.tipo === 'Seleccion Multiple') {
+      // Selección múltiple: se puede marcar más de una opción, así que alternamos
+      // (agregamos si no estaba, la quitamos si ya estaba) sin borrar las demás.
+      this.respuestasGuardadas[p.id] = actuales.includes(valor)
+        ? actuales.filter((v) => v !== valor)
+        : [...actuales, valor];
+    } else {
+      // Escala (u otro tipo de opción única): una sola respuesta por pregunta.
+      this.respuestasGuardadas[p.id] = [valor];
+    }
   }
 
   siguienteOFinalizar(): void {
@@ -103,16 +132,58 @@ export class SurveysComponent implements OnInit {
   }
 
   finalizar(): void {
-    console.log('Respuestas enviadas:', this.respuestasGuardadas);
+    const details: { questionId: number; optionId?: number; responseText?: string }[] = [];
 
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'success',
-      title: '¡Los datos se han guardado con éxito!',
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: false,
+    for (let i = 0; i < this.encuesta.preguntas.length; i++) {
+      const p: any = this.encuesta.preguntas[i];
+      const opcionesSeleccionadas = this.respuestasGuardadas[p.id] ?? [];
+      const texto = (this.respuestasTexto[p.id] || '').trim();
+
+      if (opcionesSeleccionadas.length > 0) {
+        // Una fila por cada opción marcada; en Escala solo habrá una.
+        opcionesSeleccionadas.forEach((optionId) => {
+          details.push({ questionId: Number(p.id), optionId });
+        });
+      } else if (texto) {
+        details.push({ questionId: Number(p.id), responseText: texto });
+      } else if (p.requerida) {
+        this.indicePreguntaActual = i;
+        Swal.fire('Falta una respuesta', 'Responde las preguntas obligatorias antes de enviar.', 'warning');
+        return;
+      }
+    }
+
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const payload = {
+      surveyId: Number(this.encuesta.id),
+      userId: user.id ?? user.userId,
+      details
+    };
+
+    this.encuestasService.enviarRespuestas(this.encuesta.id, payload).subscribe({
+      next: () => {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: '¡Respuestas guardadas con éxito!',
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: false,
+        });
+
+        //  Redirigimos a la ruta "completada" en lugar de al listado general
+        setTimeout(() => {
+          this.router.navigate(
+            ['/user/responder-encuesta', this.encuesta.id, 'completada'],
+            { queryParams: { total: this.encuesta.preguntas.length } }
+          );
+        }, 1500);
+      },
+      error: (err: any) => {
+        console.error('Error al enviar respuestas:', err);
+        Swal.fire('Error', 'Hubo un problema al enviar la encuesta al servidor', 'error');
+      }
     });
   }
 }

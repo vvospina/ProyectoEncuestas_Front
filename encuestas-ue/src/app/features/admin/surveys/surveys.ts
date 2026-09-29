@@ -1,7 +1,9 @@
-import { Component, computed, signal, inject } from '@angular/core';
+import { Component, computed, signal, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { QrService } from '../../../core/services/qr.service';
+import { EncuestasService } from '../../../core/services/encuestas.service';
 import { EstadoEncuestaAdmin, ESTADOS_ENCUESTA_ADMIN } from '../../../shared/models/estado-encuesta-admin.model';
+import Swal from 'sweetalert2';
 
 interface Survey {
   id: string;
@@ -10,7 +12,6 @@ interface Survey {
   teacher: string;
   questions: number;
   status: EstadoEncuestaAdmin;
-  /** Formato ISO 'YYYY-MM-DD' para poder comparar fechas fácilmente. */
   createdAt: string;
 }
 
@@ -20,9 +21,10 @@ interface Survey {
   templateUrl: './surveys.html',
   styleUrl: './surveys.scss',
 })
-export class Surveys {
+export class Surveys implements OnInit {
   protected readonly estados = ESTADOS_ENCUESTA_ADMIN;
   private readonly qrService = inject(QrService);
+  private readonly encuestasService = inject(EncuestasService);
 
   protected readonly selectedStatus = signal('TODOS');
   protected readonly fechaDesde = signal('');
@@ -33,36 +35,36 @@ export class Surveys {
   protected readonly qrDataUrl = signal<string | null>(null);
   protected readonly qrLoading = signal(false);
 
-  protected readonly surveys = signal<Survey[]>([
-    {
-      id: 'survey-001',
-      name: 'Evaluación Docente 2026-2',
-      description: 'Evaluación de la experiencia académica y docente.',
-      teacher: 'Carlos Pérez',
-      questions: 10,
-      status: 'PUBLICADA',
-      createdAt: '2026-08-23',
-    },
-    {
-      id: 'survey-002',
-      name: 'Satisfacción Académica',
-      description: 'Encuesta para conocer la satisfacción de los estudiantes.',
-      teacher: 'María López',
-      questions: 8,
-      status: 'BORRADOR',
-      createdAt: '2026-08-22',
-    },
-    {
-      id: 'survey-003',
-      name: 'Evaluación del Curso',
-      description: 'Evaluación general del desarrollo del curso.',
-      teacher: 'Andrés Gómez',
-      questions: 12,
-      status: 'INACTIVA',
-      createdAt: '2026-08-18',
-    },
-  ]);
+  // Inicializamos el arreglo vacío (ya no hay datos quemados)
+  protected readonly surveys = signal<Survey[]>([]);
 
+  ngOnInit(): void {
+    this.cargarEncuestas();
+  }
+
+  private cargarEncuestas(): void {
+    // CAMBIO CLAVE: Usamos obtenerEncuestasAdmin() para que envíe ?includeInactive=true
+    // y el backend nos devuelva TODO, sin importar si están inactivas o en borrador.
+    this.encuestasService.obtenerEncuestasAdmin().subscribe({
+      next: (data: any) => {
+        const encuestasReales = data.map((s: any) => ({
+          id: s.surveyId || s.id,
+          name: s.title || s.titulo,
+          description: s.description || s.descripcion || 'Sin descripción',
+          teacher: 'Admin', // El backend no devuelve profesor
+          questions: s.totalQuestions || s.preguntas?.length || 0,
+          status: Number(s.status) === 1 ? 'PUBLICADA' : 'INACTIVA',
+          createdAt: s.createdAt ? s.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+        }));
+        this.surveys.set(encuestasReales);
+      },
+      error: (err) => {
+        console.error('Error cargando encuestas:', err);
+        Swal.fire('Error', 'No se pudieron cargar las encuestas de la base de datos.', 'error');
+      }
+    });
+  }
+  
   protected readonly filteredSurveys = computed(() => {
     const status = this.selectedStatus();
     const desde = this.fechaDesde();
@@ -99,6 +101,7 @@ export class Surveys {
 
   /** Convierte 'YYYY-MM-DD' a un texto legible: '23 ago 2026'. */
   protected formatDate(iso: string): string {
+    if (!iso) return '';
     const [year, month, day] = iso.split('-').map(Number);
     const fecha = new Date(year, month - 1, day);
     return fecha.toLocaleDateString('es-CO', {

@@ -17,6 +17,20 @@
   </header>
   
 
+  <!-- Botón para activar la cámara -->
+  <button class="btn btn-primary d-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-sm mb-4" (click)="escanearQR()">
+    <span class="material-symbols-outlined">qr_code_scanner</span>
+    Escanear QR con Cámara
+  </button>
+
+  <!-- Contenedor donde se renderizará la cámara del celular/navegador -->
+  <div id="reader-container" class="mb-4" [style.display]="isScanning ? 'block' : 'none'">
+    <div id="reader" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden;"></div>
+    <div class="text-center mt-2">
+      <button class="btn btn-danger btn-sm rounded-pill px-3" (click)="detatarEscaneo()">Cancelar Escaneo</button>
+    </div>
+  </div>
+
   <!-- Lista de Tarjetas -->
   <div class="d-flex flex-column gap-3">
     

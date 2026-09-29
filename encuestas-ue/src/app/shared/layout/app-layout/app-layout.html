@@ -1,25 +1,17 @@
 <div class="app-shell">
 
   @if (sidebarOpen()) {
-    <div
-      class="sidebar-overlay"
-      (click)="closeSidebar()"
-      aria-hidden="true">
-    </div>
+  <div class="sidebar-overlay" (click)="closeSidebar()" aria-hidden="true">
+  </div>
   }
 
-  <aside
-    class="sidebar"
-    [class.sidebar--open]="sidebarOpen()">
+  <aside class="sidebar" [class.sidebar--open]="sidebarOpen()">
 
     <!-- HEADER -->
     <div class="sidebar__header">
 
       <div class="brand">
-        <img
-          class="brand__icon"
-          src="/img/logo-uniempresarial-2.png"
-          alt="Logo Uniempresarial" />
+        <img class="brand__icon" src="/img/logo-uniempresarial-2.png" alt="Logo Uniempresarial" />
 
         <div class="brand__text">
           <strong>Encuestas UE</strong>
@@ -27,11 +19,7 @@
         </div>
       </div>
 
-      <button
-        type="button"
-        class="sidebar__close"
-        (click)="closeSidebar()"
-        aria-label="Cerrar menú">
+      <button type="button" class="sidebar__close" (click)="closeSidebar()" aria-label="Cerrar menú">
         ×
       </button>
 
@@ -46,29 +34,21 @@
 
       @if (isAdminSection) {
 
-        <a
-          routerLink="/admin/dashboard"
-          routerLinkActive="nav-item--active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="nav-item"
-          (click)="closeSidebar()">
+      <a routerLink="/admin/dashboard" routerLinkActive="nav-item--active" [routerLinkActiveOptions]="{ exact: true }"
+        class="nav-item" (click)="closeSidebar()">
 
-          <span class="nav-item__icon">⌂</span>
-          <span>Dashboard</span>
+        <span class="nav-item__icon">⌂</span>
+        <span>Dashboard</span>
 
-        </a>
+      </a>
 
-        <a
-          routerLink="/admin/surveys"
-          routerLinkActive="nav-item--active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="nav-item"
-          (click)="closeSidebar()">
+      <a routerLink="/admin/surveys" routerLinkActive="nav-item--active" [routerLinkActiveOptions]="{ exact: true }"
+        class="nav-item" (click)="closeSidebar()">
 
-          <span class="nav-item__icon">☷</span>
-          <span>Encuestas</span>
+        <span class="nav-item__icon">☷</span>
+        <span>Encuestas</span>
 
-        </a>
+      </a>
 
       }
 
@@ -77,30 +57,13 @@
       ================================= -->
 
       @else {
+      <a routerLink="/user/available-surveys" routerLinkActive="nav-item--active" class="nav-item"
+        (click)="closeSidebar()">
 
-        <a
-          routerLink="/user/surveys"
-          routerLinkActive="nav-item--active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="nav-item"
-          (click)="closeSidebar()">
+        <span class="nav-item__icon">☷</span>
+        <span>Encuestas</span>
 
-          <span class="nav-item__icon">☷</span>
-          <span>Encuestas</span>
-
-        </a>
-
-        <a
-          routerLink="/user/responses"
-          routerLinkActive="nav-item--active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="nav-item"
-          (click)="closeSidebar()">
-
-          <span class="nav-item__icon">✓</span>
-          <span>Mis respuestas</span>
-
-        </a>
+      </a>
 
       }
 
@@ -108,20 +71,13 @@
 
     <!-- FOOTER -->
     <div class="sidebar__footer">
-      <a
-        [routerLink]="profilePath"
-        routerLinkActive="nav-item--active"
-        class="nav-item"
-        (click)="closeSidebar()">
+      <a [routerLink]="profilePath" routerLinkActive="nav-item--active" class="nav-item" (click)="closeSidebar()">
 
         <span class="nav-item__icon">◍</span>
         <span>Mi perfil</span>
       </a>
 
-      <button
-        type="button"
-        class="logout-button"
-        (click)="logout()">
+      <button type="button" class="logout-button" (click)="logout()">
 
         <span class="nav-item__icon">↪</span>
         <span>Cerrar sesión</span>
@@ -137,11 +93,7 @@
 
     <header class="topbar">
 
-      <button
-        type="button"
-        class="menu-button"
-        (click)="toggleSidebar()"
-        aria-label="Abrir menú">
+      <button type="button" class="menu-button" (click)="toggleSidebar()" aria-label="Abrir menú">
 
         ☰
 
@@ -149,10 +101,7 @@
 
       <div class="topbar__title">
         <span>Encuestas</span>
-        <img
-          class="topbar__logo"
-          src="/img/logo-uniempresarial-2.png"
-          alt="UE" />
+        <img class="topbar__logo" src="/img/logo-uniempresarial-2.png" alt="UE" />
       </div>
 
     </header>

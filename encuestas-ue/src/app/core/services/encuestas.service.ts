@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 import { Encuesta } from '../../shared/models/encuesta.models';
 import { EstadoEncuestaAdmin } from '../../shared/models/estado-encuesta-admin.model';
+import { EncuestaDisponible } from '../../shared/models/encuesta-disponible.model';
 import { environment } from '../../../environment/environment';
 import { TipoPregunta } from '../../shared/models/pregunta.model';
 import { EstudianteEncuestado } from '../../shared/models/estudiante-encuestado.model';
@@ -22,7 +23,6 @@ export interface CrearEncuestaPayload {
   }[];
 }
 
-/** Editar usa exactamente la misma forma que crear. */
 export type EditarEncuestaPayload = CrearEncuestaPayload;
 
 export interface FiltrosEncuestas {
@@ -32,16 +32,118 @@ export interface FiltrosEncuestas {
 
 @Injectable({ providedIn: 'root' })
 export class EncuestasService {
-  private readonly apiUrl = `${environment.apiUrl}/encuestas`;
+  private readonly apiUrl = `${environment.apiUrl}/surveys`;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) { }
 
-  /** Crea una encuesta nueva. */
-  crearEncuesta(payload: CrearEncuestaPayload): Observable<Encuesta> {
-    return this.http.post<Encuesta>(this.apiUrl, payload);
+  private getOptions(extraParams?: HttpParams) {
+    const token = localStorage.getItem('token');
+    return {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token || ''}`
+      }),
+      params: extraParams
+    };
   }
 
-  /** Lista encuestas, con búsqueda y filtro de estado opcionales por query params. */
+  // ==========================================
+  // MÉTODOS PARA ESTUDIANTES / VISTAS DE USUARIO
+  // ==========================================
+
+  obtenerEncuestasDisponibles(): Observable<EncuestaDisponible[]> {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userId = user.id ?? user.userId;
+    const params = userId ? new HttpParams().set('userId', String(userId)) : undefined;
+
+    return this.http.get<any>(this.apiUrl, this.getOptions(params)).pipe(
+      map(response => {
+
+        const lista = Array.isArray(response) ? response : (response?.data || response?.encuestas || response?.items || []);
+
+        return lista.map((item: any) => {
+          const id = item.id ?? item.surveyId ?? item.survey_id;
+          const estadoBackend = item.estado ?? item.status;
+          const activa = estadoBackend === 'Activa' || estadoBackend === 'Publicada' || Number(estadoBackend) === 1;
+
+          return {
+            id: id?.toString(),
+            titulo: item.titulo ?? item.title,
+            subtitulo: 'Asignación General',
+            iconoSubtitulo: 'assignment',
+            estado: item.completed ? 'COMPLETADO' : (activa ? 'DISPONIBLE' : 'PENDIENTE'),
+            descripcion: item.descripcion || item.description || 'Sin descripción',
+            totalPreguntas: item.totalQuestions ?? item.preguntas?.length ?? 0,
+            fechaTexto: item.completed ? 'Ya respondida' : 'Disponible ahora',
+            completada: !!item.completed
+          } as EncuestaDisponible;
+        });
+      })
+    );
+  }
+
+  obtenerTodasLasEncuestas(): Observable<any[]> {
+    return this.http.get<any>(this.apiUrl, this.getOptions()).pipe(
+      map(response => Array.isArray(response) ? response : (response?.data || response?.encuestas || []))
+    );
+  }
+
+  obtenerEncuestasAdmin(): Observable<any[]> {
+    const params = new HttpParams().set('includeInactive', 'true');
+    return this.http.get<any>(this.apiUrl, this.getOptions(params)).pipe(
+      map(response => Array.isArray(response) ? response : (response?.data || []))
+    );
+  }
+
+  enviarRespuestas(idEncuesta: string, respuestas: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${idEncuesta}/responses`, respuestas, this.getOptions());
+  }
+
+  // ==========================================
+  // MÉTODOS DE ADMINISTRACIÓN DE ENCUESTAS
+  // ==========================================
+
+  private aTipoBackend(tipo: string): string {
+    switch (tipo) {
+      case 'ESCALA': return 'Escala';
+      case 'ABIERTA': return 'Abierta';
+      default: return 'Seleccion Multiple';
+    }
+  }
+
+  private aPayloadBackend(payload: CrearEncuestaPayload) {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return {
+      title: payload.titulo,
+      description: payload.descripcion,
+      userId: user.id ?? user.userId,
+      questions: (payload.preguntas || [])
+        .filter(p => p.estado === 'ACTIVA')
+        .map(p => {
+          const opciones: string[] =
+            p.tipo === 'ESCALA' ? ['1', '2', '3', '4', '5'] :
+              p.tipo === 'ABIERTA' ? [] :
+                (p.opciones || []);
+
+          return {
+            questionText: p.texto,
+            questionType: this.aTipoBackend(p.tipo),
+            isRequired: p.requerida,
+            displayOrder: p.displayOrder,
+            options: opciones.map((texto, i) => ({ optionText: texto, displayOrder: i + 1 }))
+          };
+        })
+    };
+  }
+
+  crearEncuesta(payload: CrearEncuestaPayload): Observable<Encuesta> {
+    return this.http.post<Encuesta>(this.apiUrl, this.aPayloadBackend(payload), this.getOptions());
+  }
+
+  actualizarEncuesta(id: string, payload: EditarEncuestaPayload): Observable<Encuesta> {
+    return this.http.put<Encuesta>(`${this.apiUrl}/${id}`, this.aPayloadBackend(payload), this.getOptions());
+  }
+
   listarEncuestas(filtros?: FiltrosEncuestas): Observable<Encuesta[]> {
     let params = new HttpParams();
 
@@ -52,32 +154,45 @@ export class EncuestasService {
       params = params.set('estado', filtros.estado);
     }
 
-    return this.http.get<Encuesta[]>(this.apiUrl, { params });
+    return this.http.get<Encuesta[]>(this.apiUrl, this.getOptions(params));
   }
 
-  /** Trae el detalle completo (con preguntas) de una encuesta. */
   obtenerEncuestaPorId(id: string): Observable<Encuesta> {
-    return this.http.get<Encuesta>(`${this.apiUrl}/${id}`);
+    return this.http.get<Encuesta>(`${this.apiUrl}/${id}`, this.getOptions());
   }
 
-  /** Actualiza la información y las preguntas de una encuesta existente. */
-  actualizarEncuesta(id: string, payload: EditarEncuestaPayload): Observable<Encuesta> {
-    return this.http.put<Encuesta>(`${this.apiUrl}/${id}`, payload);
+  obtenerEncuestaParaResponder(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`, this.getOptions()).pipe(
+      map(s => ({
+        id: String(s.surveyId),
+        titulo: s.title,
+        descripcion: s.description,
+        profesor: { nombre: '' },
+        preguntas: (s.questions || []).map((q: any) => ({
+          id: String(q.questionId),
+          enunciado: q.questionText,
+          texto: q.questionText,
+          tipo: q.questionType,
+          requerida: q.isRequired,
+          displayOrder: q.displayOrder,
+          opciones: (q.options || []).map((o: any) => ({ id: o.optionId, texto: o.optionText }))
+        }))
+      }))
+    );
   }
 
-  /** Cambia el estado de la encuesta a ACTIVA. */
   publicarEncuesta(id: string): Observable<Encuesta> {
-    return this.http.patch<Encuesta>(`${this.apiUrl}/${id}/publicar`, {});
+    return this.http.patch<Encuesta>(`${this.apiUrl}/${id}/publish`, {}, this.getOptions());
   }
 
-  /** Cambia el estado de la encuesta a INACTIVA. */
   desactivarEncuesta(id: string): Observable<Encuesta> {
-    return this.http.patch<Encuesta>(`${this.apiUrl}/${id}/desactivar`, {});
+    return this.http.patch<Encuesta>(`${this.apiUrl}/${id}/deactivate`, {}, this.getOptions());
   }
 
-    /** Estudiantes que ya respondieron una encuesta específica. */
+  /** Estudiantes que ya respondieron una encuesta específica. */
+  /** Estudiantes que ya respondieron una encuesta específica. */
   listarEstudiantesQueRespondieron(encuestaId: string): Observable<EstudianteEncuestado[]> {
-    return this.http.get<EstudianteEncuestado[]>(`${this.apiUrl}/${encuestaId}/estudiantes`);
+    return this.http.get<EstudianteEncuestado[]>(`${this.apiUrl}/${encuestaId}/estudiantes`, this.getOptions());
   }
 
   /** Respuestas de un estudiante puntual para una encuesta, con filtro de fechas opcional. */
@@ -92,10 +207,10 @@ export class EncuestasService {
 
     return this.http.get<RespuestaPregunta[]>(
       `${this.apiUrl}/${encuestaId}/estudiantes/${estudianteId}/respuestas`,
-      { params },
+      this.getOptions(params),
     );
   }
-    /**
+  /**
    * Usado por el escáner de QR: valida (en el backend) que la encuesta exista
    * y esté activa/publicada, y devuelve su estructura completa (preguntas y opciones).
    *
@@ -103,7 +218,13 @@ export class EncuestasService {
    * resto de este servicio — por eso arma la URL desde environment.apiUrl
    * directamente, en vez de usar this.apiUrl.
    */
-  getSurveyByQR(surveyId: string): Observable<{ data: Encuesta }> {
-    return this.http.get<{ data: Encuesta }>(`${environment.apiUrl}/surveys/qr/${surveyId}`);
+  getSurveyByQR(surveyId: string): Observable<any> {
+    // Reutilizamos GET /api/surveys/:id para validar que la encuesta exista antes de abrirla
+    return this.http.get<any>(`${this.apiUrl}/${surveyId}`, this.getOptions());
+  }
+
+  /** Trae todas las respuestas crudas de una encuesta para calcular estadísticas en el Dashboard */
+  obtenerResultadosBrutos(encuestaId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${encuestaId}/responses`, this.getOptions());
   }
 }

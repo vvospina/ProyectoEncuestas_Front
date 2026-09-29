@@ -31,3 +31,21 @@ export const authGuard: CanActivateFn = async () => {
 };
 
 // Se tiene que crear "adminGuard" cuando Node.js exponga el rol del usuario, para bloquear /admin/* a quien no sea ADMIN (F01).
+export const adminGuard: CanActivateFn = async () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  await auth.authReadyPromise;
+
+  // Obtenemos el usuario actual del servicio de autenticación
+  const usuario = auth.currentUser(); // Asegúrate de que tu AuthService exponga el usuario actual
+
+  // Si tiene sesión activa y su roleId es 1 (ADMIN), lo dejamos pasar
+  if (auth.tieneSesionActiva() && usuario?.roleId === 1) {
+    return true;
+  }
+
+  // Si no es admin, lo mandamos al panel de usuario o al login
+  router.navigate(['/login']);
+  return false;
+};
