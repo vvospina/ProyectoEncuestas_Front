@@ -1,0 +1,99 @@
+<div class="scan-qr-container">
+  <!-- Cabecera principal -->
+  <div class="header-section d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h1 class="main-title">Escanear código QR</h1>
+      <p class="subtitle text-muted mb-0">
+        Apunta con la camará de tu dispositivo o ingresa la URL/código de la encuesta manualmente
+      </p>
+    </div>
+
+    <button type="button" class="btn-qr-icon" (click)="volverAtras()" title="Atras">
+      <i class="bi bi-arrow-left"></i>
+    </button>
+  </div>
+
+  <!-- Tarjeta con Navegación por Pestañas -->
+  <div class="card scan-card">
+    <div class="card-body p-4 p-md-5">
+      
+      <!-- Navegación de Tabs -->
+      <div class="tabs-header d-flex justify-content-center gap-5 mb-4">
+        <button 
+          type="button" 
+          class="tab-btn" 
+          [class.active]="activeTab() === 'camera'"
+          (click)="cambiarTab('camera')">
+          Escáner por camará
+        </button>
+
+        <button 
+          type="button" 
+          class="tab-btn" 
+          [class.active]="activeTab() === 'manual'"
+          (click)="cambiarTab('manual')">
+          Ingreso manual
+        </button>
+      </div>
+
+      <!-- TAB 1: Escáner por Cámara -->
+      @if (activeTab() === 'camera') {
+        <div class="tab-content text-center">
+          <div class="video-container">
+            <video #videoElement hidden playsinline></video>
+            
+            @if (!camaraActiva()) {
+              <div class="placeholder-box d-flex flex-column align-items-center justify-content-center">
+                <i class="bi bi-camera-video-off fs-1 text-white-50 mb-2"></i>
+              </div>
+            } @else {
+              <canvas #canvasElement class="qr-canvas"></canvas>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- TAB 2: Ingreso Manual -->
+      @if (activeTab() === 'manual') {
+        <div class="tab-content manual-content mx-auto">
+          <div class="mb-4">
+            <label for="manualInput" class="form-label text-muted small fw-medium">
+              URL o código de la encuesta
+            </label>
+            <input 
+              type="text" 
+              id="manualInput" 
+              class="form-control custom-input" 
+              #qrInput
+              placeholder="http://localhost:4200/user/responder-encuesta/survey-001"
+              [disabled]="cargando()"
+            />
+          </div>
+
+          <div class="text-center">
+            <button 
+              type="button" 
+              class="btn btn-action-blue px-5 py-2" 
+              (click)="procesarTextoEscaneado(qrInput.value)"
+              [disabled]="cargando() || !qrInput.value.trim()">
+              @if (cargando()) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Verificando...
+              } @else {
+                Validar encuesta
+              }
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Alertas de Error -->
+      @if (errorMessage()) {
+        <div class="alert alert-danger text-center mt-4 mb-0" role="alert">
+          {{ errorMessage() }}
+        </div>
+      }
+
+    </div>
+  </div>
+</div>

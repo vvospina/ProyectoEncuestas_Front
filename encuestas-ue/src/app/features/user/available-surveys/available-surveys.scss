@@ -2,6 +2,50 @@
   max-width: 720px;
 }
 
+.available-surveys-container {
+  padding: 1.5rem 2rem;
+
+  .header-section {
+    .main-title {
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: #1e1e1e;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: #6c757d;
+    }
+  }
+
+  /* Botón de escáner QR de la esquina superior derecha */
+  .btn-qr-scan {
+    background-color: var(--color-primary); // Color rojo
+    color: #ffffff;
+    border: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease, filter 0.2s ease;
+
+    &:hover {
+      transform: scale(1.05);
+      filter: brightness(0.9);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+}
+
 .survey-card {
   border-radius: 16px;
   background-color: #ffffff;
@@ -34,6 +78,20 @@
 }
 
 // Botones
+
+.btn-primary-action {
+  background-color: var(--color-secondary);
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+
+  &:hover {
+    filter: brightness(0.9);
+  }
+}
+
 .btn-brand {
   background-color: var(--color-secondary);
   color: #ffffff;

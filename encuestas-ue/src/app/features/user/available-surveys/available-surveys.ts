@@ -61,85 +61,8 @@ export class AvailableSurveysComponent implements OnInit, OnDestroy {
       case 'COMPLETADO': return 'badge-completado';
     }
   }
-
-  /** Activa la cámara de forma nativa (compatible con Capacitor y Web) */
-  async escanearQR(): Promise<void> {
-    this.isScanning = true;
-    this.cdr.detectChanges();
-
-    // Damos un pequeño respiro para que el DOM pinte el div id="reader"
-    setTimeout(async () => {
-      try {
-        this.html5QrCode = new Html5Qrcode("reader");
-
-        const qrCodeSuccessCallback = (decodedText: string) => {
-          // El QR leído exitosamente
-          this.detatarEscaneo();
-          this.procesarCodigoEscaneado(decodedText);
-        };
-
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-        // Inicia la cámara trasera por defecto en celulares, o la frontal/webcam en PC
-        await this.html5QrCode.start(
-          { facingMode: "environment" },
-          config,
-          qrCodeSuccessCallback,
-          () => {} // Ignoramos errores de cuadros por segundo sin QR detectado
-        );
-
-      } catch (err) {
-        console.error("No se pudo acceder a la cámara:", err);
-        this.isScanning = false;
-        this.cdr.detectChanges();
-        Swal.fire('Error de cámara', 'No pudimos acceder a la cámara de tu dispositivo. Revisa los permisos.', 'error');
-      }
-    }, 300);
-  }
-
-  /** Detiene la cámara y limpia el visor */
-  detatarEscaneo(): void {
-    if (this.html5QrCode && this.html5QrCode.isScanning) {
-      this.html5QrCode.stop().then(() => {
-        this.html5QrCode?.clear();
-        this.isScanning = false;
-        this.cdr.detectChanges();
-      }).catch(err => {
-        console.error("Error al detener la cámara", err);
-        this.isScanning = false;
-        this.cdr.detectChanges();
-      });
-    } else {
-      this.isScanning = false;
-      this.cdr.detectChanges();
-    }
-  }
-
-  /** Valida el texto extraído del QR contra el backend */
-  private procesarCodigoEscaneado(codigo: string): void {
-    // Si el QR contiene una URL completa (ej: http://localhost:4200/user/responder-encuesta/100), extraemos el ID final
-    const surveyId = String(codigo).includes('/') ? String(codigo).split('/').pop()?.trim() : codigo.trim();
-
-    if (!surveyId) {
-      Swal.fire('QR Inválido', 'El código escaneado no contiene un ID válido.', 'warning');
-      return;
-    }
-
-    Swal.fire({
-      title: 'Verificando...',
-      text: 'Validando encuesta en el servidor',
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading()
-    });
-
-    this.encuestasService.getSurveyByQR(surveyId).subscribe({
-      next: () => {
-        Swal.close();
-        this.router.navigate(['/user/responder-encuesta', surveyId]);
-      },
-      error: () => {
-        Swal.fire('No encontrada', `La encuesta con ID "${surveyId}" no existe o no está disponible.`, 'error');
-      }
-    });
+  abrirEscaner() {
+    // Navega a la ruta registrada para el escáner del usuario
+    this.router.navigate(['/user/scan-qr']);
   }
 }
