@@ -105,7 +105,7 @@ export class AuthService {
     this.errorMessage.set(null);
     try {
       const payload = { email, password };
-      const response: any = await firstValueFrom(this.http.post(`${this.apiUrl}/login`, payload));
+      const response: any = await firstValueFrom(this.http.post(`${this.apiUrl}/users/login`, payload));
 
       // Guardamos el token y datos en localStorage
       this.guardarSesion(response);

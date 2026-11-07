@@ -12,6 +12,7 @@ interface Survey {
   teacher: string;
   questions: number;
   status: EstadoEncuestaAdmin;
+  /** Formato ISO 'YYYY-MM-DD' para poder comparar fechas fácilmente. */
   createdAt: string;
 }
 
@@ -35,7 +36,7 @@ export class Surveys implements OnInit {
   protected readonly qrDataUrl = signal<string | null>(null);
   protected readonly qrLoading = signal(false);
 
-  // Inicializamos el arreglo vacío (ya no hay datos quemados)
+  // Lista real de encuestas (vacía hasta que cargue del backend)
   protected readonly surveys = signal<Survey[]>([]);
 
   ngOnInit(): void {
@@ -43,17 +44,16 @@ export class Surveys implements OnInit {
   }
 
   private cargarEncuestas(): void {
-    // CAMBIO CLAVE: Usamos obtenerEncuestasAdmin() para que envíe ?includeInactive=true
-    // y el backend nos devuelva TODO, sin importar si están inactivas o en borrador.
     this.encuestasService.obtenerEncuestasAdmin().subscribe({
-      next: (data: any) => {
+      next: (data: any[]) => {
         const encuestasReales = data.map((s: any) => ({
-          id: s.surveyId || s.id,
-          name: s.title || s.titulo,
-          description: s.description || s.descripcion || 'Sin descripción',
-          teacher: 'Admin', // El backend no devuelve profesor
-          questions: s.totalQuestions || s.preguntas?.length || 0,
-          status: Number(s.status) === 1 ? 'PUBLICADA' : 'INACTIVA',
+          id: String(s.id ?? s.surveyId),
+          name: s.name ?? s.title ?? 'Sin título',
+          description: s.description ?? s.descripcion ?? 'Sin descripción',
+          // El backend no expone el nombre del profesor directamente en la lista
+          teacher: 'Admin',
+          questions: s.totalQuestions ?? s.questions?.length ?? 0,
+          status: this.mapearEstado(Number(s.status)),
           createdAt: s.createdAt ? s.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
         }));
         this.surveys.set(encuestasReales);
@@ -64,7 +64,19 @@ export class Surveys implements OnInit {
       }
     });
   }
-  
+
+  /**
+   * Convierte el status numérico del backend al tipo de texto que usa el frontend.
+   * Backend: 1 = activo/publicado, 0 = inactivo/cerrado
+   */
+  private mapearEstado(status: number): EstadoEncuestaAdmin {
+    switch (status) {
+      case 1:  return 'PUBLICADA';
+      case 0:  return 'INACTIVA';
+      default: return 'BORRADOR';
+    }
+  }
+
   protected readonly filteredSurveys = computed(() => {
     const status = this.selectedStatus();
     const desde = this.fechaDesde();
@@ -108,6 +120,52 @@ export class Surveys implements OnInit {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
+    });
+  }
+
+  /**
+   * Desactiva o activa lógicamente una encuesta con confirmación mediante SweetAlert2.
+   */
+  protected cambiarEstado(survey: Survey): void {
+    const esActiva = survey.status === 'PUBLICADA';
+    const accion = esActiva ? 'desactivar' : 'activar';
+    const titulo = esActiva ? '¿Desactivar encuesta?' : '¿Activar encuesta?';
+    const texto = esActiva
+      ? 'La encuesta dejará de estar disponible para que los estudiantes la respondan.'
+      : 'La encuesta volverá a estar disponible para que los estudiantes puedan responderla.';
+
+    Swal.fire({
+      title: titulo,
+      text: texto,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: esActiva ? '#dc3545' : '#198754',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: esActiva ? 'Sí, desactivar' : 'Sí, activar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const peticion = esActiva
+          ? this.encuestasService.desactivarEncuesta(survey.id)
+          : this.encuestasService.publicarEncuesta(survey.id);
+
+        peticion.subscribe({
+          next: () => {
+            Swal.fire({
+              icon: 'success',
+              title: esActiva ? 'Encuesta desactivada' : 'Encuesta activada',
+              text: `La encuesta se ha ${esActiva ? 'desactivado' : 'activado'} correctamente.`,
+              timer: 1600,
+              showConfirmButton: false,
+            });
+            this.cargarEncuestas();
+          },
+          error: (err) => {
+            console.error(`Error al ${accion} la encuesta:`, err);
+            Swal.fire('Error', err.error?.error || `No se pudo ${accion} la encuesta.`, 'error');
+          },
+        });
+      }
     });
   }
 

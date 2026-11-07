@@ -20,8 +20,20 @@ export class SurveyResults implements OnInit {
 
   ngOnInit(): void {
     if (this.encuestaId) {
+      this.cargarDetalleEncuesta();
       this.cargarEstudiantes();
     }
+  }
+
+  private cargarDetalleEncuesta(): void {
+    this.encuestasService.obtenerEncuestaPorId(this.encuestaId).subscribe({
+      next: (s: any) => {
+        this.encuestaNombre.set(s.title || s.name || 'Detalle de Resultados');
+      },
+      error: (err) => {
+        console.error('Error al cargar título de la encuesta:', err);
+      },
+    });
   }
 
   private cargarEstudiantes(): void {
@@ -32,7 +44,7 @@ export class SurveyResults implements OnInit {
       error: (err) => {
         console.error('Error al cargar estudiantes:', err);
         Swal.fire('Error', 'No se pudieron cargar los estudiantes que respondieron.', 'error');
-      }
+      },
     });
   }
 

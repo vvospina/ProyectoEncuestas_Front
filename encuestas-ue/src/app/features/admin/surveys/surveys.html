@@ -154,11 +154,22 @@
             <span>Resultados</span>
           </a>
 
-
           <button type="button" class="action-button" (click)="generarQr(survey)">
             <i class="bi bi-qr-code"></i>
             <span>Generar código QR</span>
           </button>
+
+          @if (survey.status === 'PUBLICADA') {
+            <button type="button" class="action-button action-button--danger" (click)="cambiarEstado(survey)" title="Desactivar encuesta">
+              <i class="bi bi-pause-circle"></i>
+              <span>Desactivar</span>
+            </button>
+          } @else {
+            <button type="button" class="action-button action-button--success" (click)="cambiarEstado(survey)" title="Activar encuesta">
+              <i class="bi bi-play-circle"></i>
+              <span>Activar</span>
+            </button>
+          }
 
         </div>
 

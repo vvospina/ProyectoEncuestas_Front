@@ -21,14 +21,32 @@ export class StudentAnswers implements OnInit {
   protected readonly fechaHasta = signal('');
 
   protected readonly estudianteNombre = signal('Estudiante');
-  protected readonly estudianteCorreo = signal('estudiante@uniempresarial.edu.co');
+  protected readonly estudianteCorreo = signal('Sin correo');
 
   protected readonly respuestas = signal<RespuestaPregunta[]>([]);
 
   ngOnInit(): void {
     if (this.encuestaId && this.estudianteId) {
+      this.cargarDatosEstudiante();
       this.cargarRespuestasEstudiante();
     }
+  }
+
+  private cargarDatosEstudiante(): void {
+    this.encuestasService.listarEstudiantesQueRespondieron(this.encuestaId).subscribe({
+      next: (estudiantes) => {
+        const est = estudiantes.find((e) => String(e.estudianteId) === String(this.estudianteId));
+        if (est) {
+          this.estudianteNombre.set(est.nombre);
+          if (est.correo) {
+            this.estudianteCorreo.set(est.correo);
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Error al obtener datos del estudiante:', err);
+      },
+    });
   }
 
   private cargarRespuestasEstudiante(): void {
@@ -42,7 +60,7 @@ export class StudentAnswers implements OnInit {
       error: (err) => {
         console.error('Error al cargar respuestas del estudiante:', err);
         Swal.fire('Error', 'No se pudieron cargar las respuestas del estudiante.', 'error');
-      }
+      },
     });
   }
 
