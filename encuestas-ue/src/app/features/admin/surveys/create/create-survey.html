@@ -12,7 +12,7 @@
         Gestión de encuestas
       </span>
 
-      <h1>Crear encuesta</h1>
+      <h1>{{ modoEdicion ? 'Editar encuesta' : 'Crear encuesta' }}</h1>
 
       <p>
         Configura la información y las preguntas de la encuesta.
@@ -154,6 +154,7 @@
 
         <!-- ESTADO -->
 
+        @if (!modoEdicion) {
         <div class="form-field">
 
           <label for="status">
@@ -174,6 +175,28 @@
             }
 
           </select>
+
+        </div>
+        }
+
+
+        <!-- FECHA DE CIERRE -->
+
+        <div class="form-field">
+
+          <label for="close-date">
+            Fecha de cierre
+          </label>
+
+          <input
+            id="close-date"
+            type="date"
+            formControlName="closeDate"
+          />
+
+          <div class="field-meta">
+            <span>Opcional. La encuesta se puede responder hasta ese día.</span>
+          </div>
 
         </div>
 
@@ -716,7 +739,7 @@
         </strong>
 
         <span>
-          La encuesta está lista para ser guardada en el sistema.
+          Puedes revisarla y publicarla desde la lista de encuestas.
         </span>
 
       </div>
@@ -761,7 +784,7 @@
         } @else {
 
           <span>
-            Guardar encuesta
+            {{ modoEdicion ? 'Guardar cambios' : 'Guardar encuesta' }}
           </span>
 
         }

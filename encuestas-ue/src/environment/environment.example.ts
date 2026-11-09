@@ -3,7 +3,6 @@
 // en las copias, que NUNCA se suben a git.
 export const environment = {
   production: false,
-  devForceRole: undefined,
   apiUrl: 'http://localhost:3000/api',
   firebaseConfig: {
     apiKey: '',

@@ -8,6 +8,8 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { firestoreDb } from '../config/firebase.config';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+const ROL_ADMIN = 1;
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private auth: Auth = firebaseAuth;
@@ -53,8 +55,14 @@ export class AuthService {
       this.photoBase64.set(null);
       return;
     }
-    const snapshot = await getDoc(doc(firestoreDb, 'users', user.uid));
-    this.photoBase64.set(snapshot.exists() ? (snapshot.data()['photoBase64'] ?? null) : null);
+    // Si la foto no se puede leer, la sesión debe continuar igual
+    try {
+      const snapshot = await getDoc(doc(firestoreDb, 'users', user.uid));
+      this.photoBase64.set(snapshot.exists() ? (snapshot.data()['photoBase64'] ?? null) : null);
+    } catch (error) {
+      console.error('No se pudo cargar la foto de perfil', error);
+      this.photoBase64.set(null);
+    }
   }
 
   async updateUserProfile(nombre: string, apellido: string, fotoBase64?: string): Promise<void> {
@@ -66,6 +74,7 @@ export class AuthService {
       if (!user) throw new Error('No hay usuario autenticado.');
 
       await updateProfile(user, { displayName: `${nombre} ${apellido}`.trim() });
+      await this.sincronizarNombre(`${nombre} ${apellido}`.trim());
 
       if (fotoBase64) {
         await setDoc(doc(firestoreDb, 'users', user.uid), { photoBase64: fotoBase64 }, { merge: true });
@@ -119,6 +128,7 @@ export class AuthService {
       await setPersistence(this.auth, browserLocalPersistence);
       const credential = await createUserWithEmailAndPassword(this.auth, email, password);
       await updateProfile(credential.user, { displayName: `${nombre} ${apellido}`.trim() });
+      await this.sincronizarNombre(`${nombre} ${apellido}`.trim());
       await this.afterLogin();
     } catch (error) {
       this.errorMessage.set(this.traducirErrorRegistro(error));
@@ -172,8 +182,34 @@ export class AuthService {
     return !!this.auth.currentUser;
   }
 
+  /** Un usuario inactivado por el administrador no puede seguir en la aplicación. */
+  private async cerrarSesionPorInactivo(): Promise<void> {
+    await signOut(this.auth);
+    await this.router.navigate(['/login']);
+    this.errorMessage.set('Tu cuenta se encuentra inactiva. Comunícate con el administrador.');
+  }
+
+  /** El backend crea al usuario en su primer ingreso; aquí se le deja el nombre completo. */
+  private async sincronizarNombre(nombre: string): Promise<void> {
+    try {
+      const perfil = await firstValueFrom(this.http.get<{ id: number }>(`${environment.apiUrl}/users/me`));
+      await firstValueFrom(this.http.put(`${environment.apiUrl}/users/${perfil.id}`, { name: nombre }));
+    } catch (error) {
+      console.error('No se pudo actualizar el nombre en el backend', error);
+    }
+  }
+
   private async afterLogin(): Promise<void> {
     const rol = await this.obtenerRol();
+    if (!this.tieneSesionActiva()) return;
+    this.userRole.set(rol);
+
+    // Vuelve a la pantalla que pidió antes de iniciar sesión (por ejemplo, un QR)
+    const destino = this.router.parseUrl(this.router.url).queryParams['returnUrl'];
+    if (typeof destino === 'string' && destino.startsWith('/') && !destino.startsWith('//')) {
+      this.router.navigateByUrl(destino);
+      return;
+    }
 
     if (rol === 'ADMIN') {
       this.router.navigate(['/admin/dashboard']);
@@ -183,15 +219,15 @@ export class AuthService {
   }
 
   private async obtenerRol(): Promise<'ADMIN' | 'USER'> {
-  if (!environment.production && environment.devForceRole) {
-    return environment.devForceRole as 'ADMIN' | 'USER';
-  }
   try {
     const perfil = await firstValueFrom(
-      this.http.get<{ role: 'ADMIN' | 'USER' }>(`${environment.apiUrl}/users/me`),
+      this.http.get<{ roleId: number }>(`${environment.apiUrl}/users/me`),
     );
-    return perfil.role === 'ADMIN' ? 'ADMIN' : 'USER';
-  } catch {
+    return perfil.roleId === ROL_ADMIN ? 'ADMIN' : 'USER';
+  } catch (error) {
+    if ((error as { status?: number })?.status === 403) {
+      await this.cerrarSesionPorInactivo();
+    }
     return 'USER';
   }
 }

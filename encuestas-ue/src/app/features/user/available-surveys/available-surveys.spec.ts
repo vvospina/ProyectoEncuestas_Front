@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AvailableSurveys } from './available-surveys';
+import { AvailableSurveysComponent } from './available-surveys';
 
-describe('AvailableSurveys', () => {
-  let component: AvailableSurveys;
-  let fixture: ComponentFixture<AvailableSurveys>;
+describe('AvailableSurveysComponent', () => {
+  let component: AvailableSurveysComponent;
+  let fixture: ComponentFixture<AvailableSurveysComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AvailableSurveys],
+      imports: [AvailableSurveysComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(AvailableSurveys);
+    fixture = TestBed.createComponent(AvailableSurveysComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

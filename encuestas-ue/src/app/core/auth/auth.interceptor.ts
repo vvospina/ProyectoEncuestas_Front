@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { HttpInterceptorFn } from '@angular/common/http';
 import { from, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environment/environment';
 
 /**
  * Un "interceptor" revisa TODAS las peticiones
@@ -10,6 +11,11 @@ import { AuthService } from './auth.service';
  * poner el header manualmente.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  // El token solo viaja a nuestra API, nunca a otros servicios
+  if (!req.url.startsWith(environment.apiUrl)) {
+    return next(req);
+  }
+
   const auth = inject(AuthService);
 
   return from(auth.getIdToken()).pipe(

@@ -15,6 +15,11 @@ export const USER_ROUTES: Routes = [
     loadComponent: () => import('../profile/edit/profile-edit').then((m) => m.ProfileEditComponent),
   },
 
+  {
+    path: 'responses',
+    loadComponent: () => import('./responses/responses').then((m) => m.Responses),
+  },
+
   // Pantalla principal de encuestas disponibles (F06)
   {
     path: 'available-surveys',

@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { EstudianteEncuestado } from '../../../../../shared/models/estudiante-encuestado.model';
+import { EncuestasService, mensajeError } from '../../../../../core/services/encuestas.service';
 
 @Component({
   selector: 'app-survey-results',
@@ -8,38 +9,26 @@ import { EstudianteEncuestado } from '../../../../../shared/models/estudiante-en
   templateUrl: './survey-results.html',
   styleUrl: './survey-results.scss',
 })
-export class SurveyResults {
+export class SurveyResults implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly encuestasService = inject(EncuestasService);
 
   protected readonly encuestaId = this.route.snapshot.paramMap.get('id') ?? '';
 
-  /**
-   * Datos temporales para la interfaz.
-   * Cuando el backend esté listo, se tiene que ver algo así:
-   * this.encuestasService.listarEstudiantesQueRespondieron(this.encuestaId)
-   */
-  protected readonly encuestaNombre = signal('Evaluación Docente 2026-2');
+  protected readonly encuestaNombre = signal('');
+  protected readonly estudiantes = signal<EstudianteEncuestado[]>([]);
 
-  protected readonly estudiantes = signal<EstudianteEncuestado[]>([
-    {
-      estudianteId: 'est-001',
-      nombre: 'Luis Martinez',
-      correo: 'lmarnineza@uniempresarial.edu.co',
-      fechaRespuesta: '2026-08-24',
-    },
-    {
-      estudianteId: 'est-002',
-      nombre: 'Zullie Diaz',
-      correo: 'zdiaz@uniempresarial.edu.co',
-      fechaRespuesta: '2026-08-25',
-    },
-    {
-      estudianteId: 'est-003',
-      nombre: 'Malory Farfan',
-      correo: 'mfarfan@uniempresarial.edu.co',
-      fechaRespuesta: '2026-08-25',
-    },
-  ]);
+  ngOnInit(): void {
+    this.encuestasService.obtenerEncuestaPorId(this.encuestaId).subscribe({
+      next: (encuesta) => this.encuestaNombre.set(encuesta.titulo),
+      error: (err) => this.encuestaNombre.set(mensajeError(err, 'No pudimos cargar la encuesta')),
+    });
+
+    this.encuestasService.listarEstudiantesQueRespondieron(this.encuestaId).subscribe({
+      next: (estudiantes) => this.estudiantes.set(estudiantes),
+      error: (err) => console.error('Error al cargar los estudiantes', err),
+    });
+  }
 
   protected formatDate(iso: string): string {
     const [year, month, day] = iso.split('-').map(Number);

@@ -1,6 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { RespuestaPregunta } from '../../../../../../shared/models/respuesta-pregunta.model'
+import { EncuestasService } from '../../../../../../core/services/encuestas.service';
 
 @Component({
   selector: 'app-student-answers',
@@ -8,8 +9,9 @@ import { RespuestaPregunta } from '../../../../../../shared/models/respuesta-pre
   templateUrl: './student-answers.html',
   styleUrl: './student-answers.scss',
 })
-export class StudentAnswers {
+export class StudentAnswers implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly encuestasService = inject(EncuestasService);
 
   protected readonly encuestaId = this.route.snapshot.paramMap.get('id') ?? '';
   protected readonly estudianteId = this.route.snapshot.paramMap.get('studentId') ?? '';
@@ -17,37 +19,20 @@ export class StudentAnswers {
   protected readonly fechaDesde = signal('');
   protected readonly fechaHasta = signal('');
 
-  /**
-   * Datos temporales para construir la interfaz.
-   * Cuando el backend esté listo, se tendrá que ver algo así:
-   * this.encuestasService.obtenerRespuestasEstudiante(this.encuestaId, this.estudianteId, { desde, hasta })
-   */
-  protected readonly estudianteNombre = signal('Laura Ramírez');
-  protected readonly estudianteCorreo = signal('laura.ramirez@uniempresarial.edu.co');
+  protected readonly estudianteNombre = signal('');
+  protected readonly estudianteCorreo = signal('');
+  protected readonly respuestas = signal<RespuestaPregunta[]>([]);
 
-  protected readonly respuestas = signal<RespuestaPregunta[]>([
-    {
-      preguntaId: 'preg-001',
-      preguntaTexto: 'El docente demuestra dominio del tema impartido.',
-      tipoPregunta: 'ESCALA',
-      respuesta: '5',
-      fechaRespuesta: '2026-08-24',
-    },
-    {
-      preguntaId: 'preg-002',
-      preguntaTexto: '¿Qué aspecto de la metodología del docente destacarías?',
-      tipoPregunta: 'ABIERTA',
-      respuesta: 'Explica con ejemplos de la vida real y resuelve dudas con paciencia.',
-      fechaRespuesta: '2026-08-24',
-    },
-    {
-      preguntaId: 'preg-003',
-      preguntaTexto: '¿Con qué frecuencia el docente llegó puntual a clase?',
-      tipoPregunta: 'SELECCION_MULTIPLE',
-      respuesta: 'Siempre',
-      fechaRespuesta: '2026-08-24',
-    },
-  ]);
+  ngOnInit(): void {
+    this.encuestasService.obtenerRespuestasEstudiante(this.encuestaId, this.estudianteId).subscribe({
+      next: (datos) => {
+        this.estudianteNombre.set(datos.nombre);
+        this.estudianteCorreo.set(datos.correo);
+        this.respuestas.set(datos.respuestas);
+      },
+      error: (err) => console.error('Error al cargar las respuestas', err),
+    });
+  }
 
   protected readonly respuestasFiltradas = computed(() => {
     const desde = this.fechaDesde();

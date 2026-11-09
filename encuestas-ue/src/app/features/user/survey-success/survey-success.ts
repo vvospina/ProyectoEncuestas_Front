@@ -1,14 +1,15 @@
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 @Component({
-  imports: [],
+  imports: [RouterLink],
   selector: 'app-survey-success',
   styleUrl: './survey-success.scss',
   templateUrl: './survey-success.html',
 })
 export class SurveySuccess {
-  // reemplazar por los datos reales que entregue el flujo de diligenciamiento cuando esté conectado al backend
-  protected readonly teacherName = 'Carlos Martínez';
-  protected readonly totalQuestions = 10;
-  protected readonly answeredQuestions = 10;
+  // Datos que envía la pantalla de responder al navegar hasta aquí
+  protected readonly surveyTitle: string = history.state?.titulo ?? 'Encuesta';
+  protected readonly totalQuestions: number = history.state?.total ?? 0;
+  protected readonly answeredQuestions: number = history.state?.respondidas ?? 0;
 }

@@ -1,14 +1,16 @@
-import { Component, computed, signal, inject } from '@angular/core';
+import { Component, computed, signal, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { QrService } from '../../../core/services/qr.service';
+import { EncuestasService, mensajeError } from '../../../core/services/encuestas.service';
+import { Observable } from 'rxjs';
 import { EstadoEncuestaAdmin, ESTADOS_ENCUESTA_ADMIN } from '../../../shared/models/estado-encuesta-admin.model';
 
 interface Survey {
   id: string;
   name: string;
   description: string;
-  teacher: string;
   questions: number;
+  responses: number;
   status: EstadoEncuestaAdmin;
   /** Formato ISO 'YYYY-MM-DD' para poder comparar fechas fácilmente. */
   createdAt: string;
@@ -20,9 +22,12 @@ interface Survey {
   templateUrl: './surveys.html',
   styleUrl: './surveys.scss',
 })
-export class Surveys {
+export class Surveys implements OnInit {
   protected readonly estados = ESTADOS_ENCUESTA_ADMIN;
   private readonly qrService = inject(QrService);
+  private readonly encuestasService = inject(EncuestasService);
+
+  protected readonly errorMensaje = signal<string | null>(null);
 
   protected readonly selectedStatus = signal('TODOS');
   protected readonly fechaDesde = signal('');
@@ -33,35 +38,7 @@ export class Surveys {
   protected readonly qrDataUrl = signal<string | null>(null);
   protected readonly qrLoading = signal(false);
 
-  protected readonly surveys = signal<Survey[]>([
-    {
-      id: 'survey-001',
-      name: 'Evaluación Docente 2026-2',
-      description: 'Evaluación de la experiencia académica y docente.',
-      teacher: 'Carlos Pérez',
-      questions: 10,
-      status: 'PUBLICADA',
-      createdAt: '2026-08-23',
-    },
-    {
-      id: 'survey-002',
-      name: 'Satisfacción Académica',
-      description: 'Encuesta para conocer la satisfacción de los estudiantes.',
-      teacher: 'María López',
-      questions: 8,
-      status: 'BORRADOR',
-      createdAt: '2026-08-22',
-    },
-    {
-      id: 'survey-003',
-      name: 'Evaluación del Curso',
-      description: 'Evaluación general del desarrollo del curso.',
-      teacher: 'Andrés Gómez',
-      questions: 12,
-      status: 'INACTIVA',
-      createdAt: '2026-08-18',
-    },
-  ]);
+  protected readonly surveys = signal<Survey[]>([]);
 
   protected readonly filteredSurveys = computed(() => {
     const status = this.selectedStatus();
@@ -76,6 +53,52 @@ export class Surveys {
       return matchesStatus && matchesDesde && matchesHasta;
     });
   });
+
+  ngOnInit(): void {
+    this.cargarEncuestas();
+  }
+
+  private cargarEncuestas(): void {
+    this.encuestasService.listarEncuestas().subscribe({
+      next: (encuestas) =>
+        this.surveys.set(
+          encuestas.map((encuesta) => ({
+            id: encuesta.id,
+            name: encuesta.titulo,
+            description: encuesta.descripcion ?? '',
+            questions: encuesta.totalPreguntas ?? 0,
+            responses: encuesta.totalRespuestas ?? 0,
+            status: encuesta.estado ?? 'BORRADOR',
+            createdAt: encuesta.fechaCreacion ?? '',
+          })),
+        ),
+      error: (err) => this.errorMensaje.set(mensajeError(err, 'No pudimos cargar las encuestas.')),
+    });
+  }
+
+  private aplicarCambio(cambio: Observable<unknown>): void {
+    this.errorMensaje.set(null);
+    cambio.subscribe({
+      next: () => this.cargarEncuestas(),
+      error: (err) => this.errorMensaje.set(mensajeError(err, 'No pudimos cambiar el estado de la encuesta.')),
+    });
+  }
+
+  protected publicar(survey: Survey): void {
+    this.aplicarCambio(this.encuestasService.publicarEncuesta(survey.id));
+  }
+
+  protected volverABorrador(survey: Survey): void {
+    this.aplicarCambio(this.encuestasService.volverABorrador(survey.id));
+  }
+
+  protected inactivar(survey: Survey): void {
+    this.aplicarCambio(this.encuestasService.desactivarEncuesta(survey.id));
+  }
+
+  protected reactivar(survey: Survey): void {
+    this.aplicarCambio(this.encuestasService.reactivarEncuesta(survey.id));
+  }
 
   protected updateStatus(event: Event): void {
     const select = event.target as HTMLSelectElement;

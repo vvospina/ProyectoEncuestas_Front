@@ -17,11 +17,19 @@
   </header>
   
 
+  @if (errorMensaje()) {
+    <div class="alert alert-danger" role="alert">{{ errorMensaje() }}</div>
+  }
+
+  @if (!cargando() && !errorMensaje() && encuestas().length === 0) {
+    <p class="text-muted text-center py-5">No hay encuestas disponibles por ahora.</p>
+  }
+
   <!-- Lista de Tarjetas -->
   <div class="d-flex flex-column gap-3">
     
     <article
-      *ngFor="let encuesta of encuestas"
+      *ngFor="let encuesta of encuestas()"
       class="card survey-card p-4 border-0 shadow-sm"
       [class.opacity-75]="encuesta.completada">
 

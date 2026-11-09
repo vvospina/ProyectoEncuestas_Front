@@ -23,6 +23,18 @@ export const ADMIN_ROUTES: Routes = [
       ),
   },
   {
+    path: 'surveys/:id/edit',
+    loadComponent: () =>
+      import('./surveys/create/create-survey').then(
+        (m) => m.CreateSurvey,
+      ),
+  },
+  {
+    path: 'surveys/:id',
+    loadComponent: () =>
+      import('./surveys/detail/survey-detail').then((m) => m.SurveyDetail),
+  },
+  {
     path: 'surveys/:id/results',
     loadComponent: () =>
       import('../admin/surveys/results/survey-results/survey-results').then((m) => m.SurveyResults),
