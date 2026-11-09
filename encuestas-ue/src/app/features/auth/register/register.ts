@@ -31,8 +31,7 @@ export class RegisterComponent {
 
   form = this.fb.nonNullable.group(
     {
-      nombre: ['', [Validators.required, Validators.minLength(2)]],
-      apellido: ['', [Validators.required, Validators.minLength(2)]],
+      name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmarPassword: ['', [Validators.required]],
@@ -58,8 +57,8 @@ export class RegisterComponent {
       this.form.markAllAsTouched();
       return;
     }
-    const { nombre, apellido, email, password } = this.form.getRawValue();
-    this.auth.registerWithEmail(nombre, apellido, email, password);
+    const { name, email, password } = this.form.getRawValue();
+    this.auth.registerWithEmail(name, email, password);
   }
 
   alternarPassword(): void {

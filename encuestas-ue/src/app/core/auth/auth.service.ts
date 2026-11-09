@@ -121,14 +121,14 @@ export class AuthService {
     }
   }
 
-  async registerWithEmail(nombre: string, apellido: string, email: string, password: string): Promise<void> {
+  async registerWithEmail(nombre: string, email: string, password: string): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
     try {
       await setPersistence(this.auth, browserLocalPersistence);
       const credential = await createUserWithEmailAndPassword(this.auth, email, password);
-      await updateProfile(credential.user, { displayName: `${nombre} ${apellido}`.trim() });
-      await this.sincronizarNombre(`${nombre} ${apellido}`.trim());
+      await updateProfile(credential.user, { displayName: nombre.trim() });
+      await this.sincronizarNombre(nombre.trim());
       await this.afterLogin();
     } catch (error) {
       this.errorMessage.set(this.traducirErrorRegistro(error));

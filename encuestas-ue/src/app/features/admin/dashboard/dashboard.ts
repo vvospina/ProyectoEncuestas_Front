@@ -36,12 +36,11 @@ export class Dashboard implements OnInit {
   private readonly estadisticas = signal<EstadisticasEncuesta | null>(null);
 
   errorMensaje = signal<string | null>(null);
+  cargando = signal(false);
 
   // ── Filtros ──────────────────────────────────────────────
   selectedSurvey = signal('');
   filtroEstado = signal('TODOS');
-  mostrarFiltros = signal(false);
-  mostrarFechas = signal(false);
   fechaDesde = signal('');
   fechaHasta = signal('');
 
@@ -174,12 +173,6 @@ export class Dashboard implements OnInit {
     this.cargarEstadisticas();
   }
 
-  limpiarFechas(): void {
-    this.fechaDesde.set('');
-    this.fechaHasta.set('');
-    this.cargarEstadisticas();
-  }
-
   private seleccionarPrimera(): void {
     const primera = this.surveys()[0];
     this.selectedSurvey.set(primera?.id ?? '');
@@ -195,12 +188,17 @@ export class Dashboard implements OnInit {
     if (!id) return;
 
     this.errorMensaje.set(null);
+    this.cargando.set(true);
     this.encuestasService.obtenerEstadisticas(id, { desde: this.fechaDesde(), hasta: this.fechaHasta() }).subscribe({
       next: (estadisticas) => {
         this.estadisticas.set(estadisticas);
         this.activeQuestionId.set(1);
+        this.cargando.set(false);
       },
-      error: (err) => this.errorMensaje.set(mensajeError(err, 'No pudimos cargar los resultados.')),
+      error: (err) => {
+        this.errorMensaje.set(mensajeError(err, 'No pudimos cargar los resultados.'));
+        this.cargando.set(false);
+      },
     });
   }
 

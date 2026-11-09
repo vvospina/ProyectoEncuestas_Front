@@ -641,3 +641,22 @@ a.action-button {
   }
 
 }
+
+
+.action-button--danger {
+  color: #dc3545 !important;
+
+  &:hover {
+    background-color: rgba(220, 53, 69, 0.08) !important;
+    border-color: rgba(220, 53, 69, 0.3) !important;
+  }
+}
+
+.action-button--success {
+  color: #198754 !important;
+
+  &:hover {
+    background-color: rgba(25, 135, 84, 0.08) !important;
+    border-color: rgba(25, 135, 84, 0.3) !important;
+  }
+}
