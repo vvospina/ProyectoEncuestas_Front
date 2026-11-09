@@ -1,0 +1,90 @@
+@if (encuesta(); as datos) {
+<div class="survey-detail-page">
+
+  <header class="detail-header">
+
+    <a [routerLink]="['/admin/surveys']" class="back-link">
+      <i class="bi bi-arrow-left"></i>
+      <span>Volver a encuestas</span>
+    </a>
+
+    <div class="detail-header__row">
+
+      <div>
+        <span class="detail-status">{{ datos.estado }}</span>
+        <h1>{{ datos.titulo }}</h1>
+        <p>{{ datos.descripcion }}</p>
+      </div>
+
+      <div class="detail-actions">
+        @if (datos.estado === 'BORRADOR') {
+          <a [routerLink]="['/admin/surveys', datos.id, 'edit']" class="detail-button">
+            <i class="bi bi-pencil"></i>
+            <span>Editar</span>
+          </a>
+        }
+        <a [routerLink]="['/admin/surveys', datos.id, 'results']" class="detail-button">
+          <i class="bi bi-bar-chart"></i>
+          <span>Resultados</span>
+        </a>
+      </div>
+
+    </div>
+
+    <dl class="detail-meta">
+      <div>
+        <dt>Creada</dt>
+        <dd>{{ formatDate(datos.fechaCreacion) }}</dd>
+      </div>
+      <div>
+        <dt>Fecha de cierre</dt>
+        <dd>{{ formatDate(datos.fechaCierre) }}</dd>
+      </div>
+      <div>
+        <dt>Respuestas</dt>
+        <dd>{{ datos.totalRespuestas }}</dd>
+      </div>
+    </dl>
+
+  </header>
+
+  <main class="detail-content">
+
+    <h2>Preguntas</h2>
+
+    @for (pregunta of datos.preguntas; track pregunta.id) {
+
+      <article class="question-card" [class.question-card--inactive]="pregunta.estado === 'INACTIVA'">
+
+        <div class="question-card__header">
+          <span class="question-card__type">{{ etiquetaTipo(pregunta.tipo) }}</span>
+          @if (pregunta.requerida) {
+            <span class="question-card__tag">Obligatoria</span>
+          }
+          @if (pregunta.estado === 'INACTIVA') {
+            <span class="question-card__tag">Inactiva</span>
+          }
+        </div>
+
+        <p class="question-card__text">{{ $index + 1 }}. {{ pregunta.texto }}</p>
+
+        @if (pregunta.opciones?.length) {
+          <ul class="question-card__options">
+            @for (opcion of pregunta.opciones; track opcion.id) {
+              @if (opcion.estado === 'ACTIVA') {
+                <li>{{ opcion.texto }}</li>
+              }
+            }
+          </ul>
+        }
+
+      </article>
+
+    } @empty {
+      <p class="detail-empty">Esta encuesta todavía no tiene preguntas.</p>
+    }
+
+  </main>
+
+</div>
+}

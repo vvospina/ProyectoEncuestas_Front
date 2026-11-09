@@ -1,9 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { EncuestaDisponible, EstadoEncuesta } from '../../../shared/models/encuesta-disponible.model';
-import { EncuestasService } from '../../../core/services/encuestas.service';
-import Swal from 'sweetalert2';
+import { EncuestasService, mensajeError } from '../../../core/services/encuestas.service';
 
 @Component({
   selector: 'app-available-surveys',
@@ -13,37 +12,28 @@ import Swal from 'sweetalert2';
   styleUrls: ['./available-surveys.scss']
 })
 export class AvailableSurveysComponent implements OnInit {
+  private readonly encuestasService = inject(EncuestasService);
 
-  encuestas: EncuestaDisponible[] = [];
+  encuestas = signal<EncuestaDisponible[]>([]);
+  cargando = signal(true);
+  errorMensaje = signal<string | null>(null);
 
-  constructor(
-    private router: Router,
-    private encuestasService: EncuestasService,
-    private cdr: ChangeDetectorRef
-  ) {}
+  constructor(private router: Router) {}
 
   ngOnInit(): void {
-    this.cargarEncuestasReales();
-  }
-
-  cargarEncuestasReales(): void {
-    this.encuestasService.obtenerEncuestasDisponibles().subscribe({
-      next: (data) => {
-        this.encuestas = data;
-        this.cdr.detectChanges();
+    this.encuestasService.listarEncuestasDisponibles().subscribe({
+      next: (encuestas) => {
+        this.encuestas.set(encuestas);
+        this.cargando.set(false);
       },
       error: (err) => {
-        console.error('Error al cargar encuestas desde la base de datos:', err);
-      }
+        this.errorMensaje.set(mensajeError(err, 'No pudimos cargar las encuestas. Intenta de nuevo.'));
+        this.cargando.set(false);
+      },
     });
   }
 
   responderEncuesta(id: string): void {
-    const encuesta = this.encuestas.find(e => e.id === id);
-    if (encuesta?.completada) {
-      Swal.fire('Encuesta completada', 'Ya respondiste esta encuesta. Solo se permite un intento.', 'info');
-      return;
-    }
     this.router.navigate(['/user/responder-encuesta', id]);
   }
 
@@ -54,12 +44,8 @@ export class AvailableSurveysComponent implements OnInit {
       case 'COMPLETADO': return 'badge-completado';
     }
   }
-
-  abrirEscaner(): void {
+  abrirEscaner() {
+    // Navega a la ruta registrada para el escáner del usuario
     this.router.navigate(['/user/scan-qr']);
-  }
-
-  escanearQR(): void {
-    this.abrirEscaner();
   }
 }

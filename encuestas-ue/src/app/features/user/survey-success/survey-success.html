@@ -8,8 +8,12 @@
 
     <div class="bg-light rounded-3 p-3 mb-4 text-start border">
       <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+        <span class="text-muted small fw-semibold">Encuesta</span>
+        <span class="fw-bold">{{ surveyTitle }}</span>
+      </div>
+      <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
         <span class="text-muted small fw-semibold">Preguntas respondidas</span>
-        <span class="fw-bold">{{ totalQuestions }}</span>
+        <span class="fw-bold">{{ answeredQuestions }} de {{ totalQuestions }}</span>
       </div>
       <div class="d-flex justify-content-between">
         <span class="text-muted small fw-semibold">Estado</span>

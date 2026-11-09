@@ -412,3 +412,115 @@ $border:     rgba(146, 111, 107, 0.2);
   .dashboard-page { padding: 1rem 1rem 5rem; }
   .bar-chart       { height: 12rem; }
 }
+
+/* ── Secciones nuevas ───────────────────────────────────── */
+.section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: $navy;
+}
+
+.kpi-card__detail {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: $muted;
+}
+
+.kpi-grid + .section-title {
+  margin-top: 0.5rem;
+}
+
+.sentiment-card,
+.detail-card {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  background: $surface;
+}
+
+.sentiment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+}
+
+.sentiment-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+
+  span {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  strong {
+    font-size: 2rem;
+    line-height: 1.1;
+  }
+
+  small {
+    font-size: 0.85rem;
+  }
+}
+
+.sentiment-item--positive { background: #e6f4ea; color: #1e6b37; }
+.sentiment-item--neutral  { background: #fdf3d8; color: #80590a; }
+.sentiment-item--negative { background: #fce8e8; color: #a32124; }
+
+.sentiment-bar {
+  display: flex;
+  height: 0.6rem;
+  margin-top: 1rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #E8E8ED;
+}
+
+.sentiment-bar__part--positive { background: #2e9e55; }
+.sentiment-bar__part--neutral  { background: #e0a526; }
+.sentiment-bar__part--negative { background: #d8393c; }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1rem;
+}
+
+.detail-card h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: $navy;
+}
+
+.option-row + .option-row {
+  margin-top: 0.75rem;
+}
+
+.option-row__text {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+  color: $muted;
+}
+
+.comment {
+  margin: 0 0 0.5rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.5rem;
+  background: #F4F4F7;
+  font-size: 0.875rem;
+}
+
+.comment-empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: $muted;
+}

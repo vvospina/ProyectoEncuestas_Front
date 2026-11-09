@@ -1,8 +1,7 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { RespuestaPregunta } from '../../../../../../shared/models/respuesta-pregunta.model';
+import { RespuestaPregunta } from '../../../../../../shared/models/respuesta-pregunta.model'
 import { EncuestasService } from '../../../../../../core/services/encuestas.service';
-import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-student-answers',
@@ -20,47 +19,18 @@ export class StudentAnswers implements OnInit {
   protected readonly fechaDesde = signal('');
   protected readonly fechaHasta = signal('');
 
-  protected readonly estudianteNombre = signal('Estudiante');
-  protected readonly estudianteCorreo = signal('Sin correo');
-
+  protected readonly estudianteNombre = signal('');
+  protected readonly estudianteCorreo = signal('');
   protected readonly respuestas = signal<RespuestaPregunta[]>([]);
 
   ngOnInit(): void {
-    if (this.encuestaId && this.estudianteId) {
-      this.cargarDatosEstudiante();
-      this.cargarRespuestasEstudiante();
-    }
-  }
-
-  private cargarDatosEstudiante(): void {
-    this.encuestasService.listarEstudiantesQueRespondieron(this.encuestaId).subscribe({
-      next: (estudiantes) => {
-        const est = estudiantes.find((e) => String(e.estudianteId) === String(this.estudianteId));
-        if (est) {
-          this.estudianteNombre.set(est.nombre);
-          if (est.correo) {
-            this.estudianteCorreo.set(est.correo);
-          }
-        }
+    this.encuestasService.obtenerRespuestasEstudiante(this.encuestaId, this.estudianteId).subscribe({
+      next: (datos) => {
+        this.estudianteNombre.set(datos.nombre);
+        this.estudianteCorreo.set(datos.correo);
+        this.respuestas.set(datos.respuestas);
       },
-      error: (err) => {
-        console.error('Error al obtener datos del estudiante:', err);
-      },
-    });
-  }
-
-  private cargarRespuestasEstudiante(): void {
-    const desde = this.fechaDesde() || undefined;
-    const hasta = this.fechaHasta() || undefined;
-
-    this.encuestasService.obtenerRespuestasEstudiante(this.encuestaId, this.estudianteId, { desde, hasta }).subscribe({
-      next: (data) => {
-        this.respuestas.set(data);
-      },
-      error: (err) => {
-        console.error('Error al cargar respuestas del estudiante:', err);
-        Swal.fire('Error', 'No se pudieron cargar las respuestas del estudiante.', 'error');
-      },
+      error: (err) => console.error('Error al cargar las respuestas', err),
     });
   }
 
@@ -69,9 +39,8 @@ export class StudentAnswers implements OnInit {
     const hasta = this.fechaHasta();
 
     return this.respuestas().filter((respuesta) => {
-      const fechaResp = respuesta.fechaRespuesta ? respuesta.fechaRespuesta.split('T')[0] : '';
-      const matchesDesde = !desde || fechaResp >= desde;
-      const matchesHasta = !hasta || fechaResp <= hasta;
+      const matchesDesde = !desde || respuesta.fechaRespuesta >= desde;
+      const matchesHasta = !hasta || respuesta.fechaRespuesta <= hasta;
       return matchesDesde && matchesHasta;
     });
   });
@@ -94,13 +63,10 @@ export class StudentAnswers implements OnInit {
   protected etiquetaTipo(tipo: string): string {
     switch (tipo) {
       case 'ESCALA':
-      case 'Escala':
         return 'Escala 1 - 5';
       case 'ABIERTA':
-      case 'Abierta':
         return 'Respuesta abierta';
       case 'SELECCION_MULTIPLE':
-      case 'Seleccion Multiple':
         return 'Selección múltiple';
       default:
         return tipo;
@@ -108,9 +74,7 @@ export class StudentAnswers implements OnInit {
   }
 
   protected formatDate(iso: string): string {
-    if (!iso) return '';
-    const datePart = iso.split('T')[0];
-    const [year, month, day] = datePart.split('-').map(Number);
+    const [year, month, day] = iso.split('-').map(Number);
     return new Date(year, month - 1, day).toLocaleDateString('es-CO', {
       day: '2-digit',
       month: 'short',

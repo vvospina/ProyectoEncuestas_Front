@@ -1,1 +1,49 @@
-<p>responses works!</p>
+<div class="responses-page">
+
+  <header class="responses-header">
+    <h1>Mis respuestas</h1>
+    <p>Encuestas que ya respondiste y lo que contestaste en cada una.</p>
+  </header>
+
+  <main class="responses-content">
+
+    @if (errorMensaje()) {
+      <div class="alert alert-danger" role="alert">{{ errorMensaje() }}</div>
+    }
+
+    @for (envio of respuestas(); track envio.id) {
+
+      <article class="response-card">
+
+        <div class="response-card__header">
+          <h2>{{ envio.titulo }}</h2>
+          <span>
+            <i class="bi bi-calendar3"></i>
+            {{ formatDate(envio.fecha) }}
+          </span>
+        </div>
+
+        @for (detalle of envio.detalles; track detalle.pregunta) {
+          <div class="response-item">
+            <p class="response-item__question">{{ detalle.pregunta }}</p>
+            <p class="response-item__answer">{{ detalle.respuesta }}</p>
+          </div>
+        }
+
+      </article>
+
+    } @empty {
+
+      @if (!cargando() && !errorMensaje()) {
+        <div class="responses-empty">
+          <i class="bi bi-clipboard-x"></i>
+          <h2>Todavía no has respondido encuestas</h2>
+          <p>Cuando respondas una encuesta, aparecerá aquí.</p>
+        </div>
+      }
+
+    }
+
+  </main>
+
+</div>

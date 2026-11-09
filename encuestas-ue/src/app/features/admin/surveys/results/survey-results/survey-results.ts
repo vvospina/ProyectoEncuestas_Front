@@ -1,8 +1,7 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { EstudianteEncuestado } from '../../../../../shared/models/estudiante-encuestado.model';
-import { EncuestasService } from '../../../../../core/services/encuestas.service';
-import Swal from 'sweetalert2';
+import { EncuestasService, mensajeError } from '../../../../../core/services/encuestas.service';
 
 @Component({
   selector: 'app-survey-results',
@@ -15,43 +14,24 @@ export class SurveyResults implements OnInit {
   private readonly encuestasService = inject(EncuestasService);
 
   protected readonly encuestaId = this.route.snapshot.paramMap.get('id') ?? '';
-  protected readonly encuestaNombre = signal('Detalle de Resultados');
+
+  protected readonly encuestaNombre = signal('');
   protected readonly estudiantes = signal<EstudianteEncuestado[]>([]);
 
   ngOnInit(): void {
-    if (this.encuestaId) {
-      this.cargarDetalleEncuesta();
-      this.cargarEstudiantes();
-    }
-  }
-
-  private cargarDetalleEncuesta(): void {
     this.encuestasService.obtenerEncuestaPorId(this.encuestaId).subscribe({
-      next: (s: any) => {
-        this.encuestaNombre.set(s.title || s.name || 'Detalle de Resultados');
-      },
-      error: (err) => {
-        console.error('Error al cargar título de la encuesta:', err);
-      },
+      next: (encuesta) => this.encuestaNombre.set(encuesta.titulo),
+      error: (err) => this.encuestaNombre.set(mensajeError(err, 'No pudimos cargar la encuesta')),
     });
-  }
 
-  private cargarEstudiantes(): void {
     this.encuestasService.listarEstudiantesQueRespondieron(this.encuestaId).subscribe({
-      next: (data) => {
-        this.estudiantes.set(data);
-      },
-      error: (err) => {
-        console.error('Error al cargar estudiantes:', err);
-        Swal.fire('Error', 'No se pudieron cargar los estudiantes que respondieron.', 'error');
-      },
+      next: (estudiantes) => this.estudiantes.set(estudiantes),
+      error: (err) => console.error('Error al cargar los estudiantes', err),
     });
   }
 
   protected formatDate(iso: string): string {
-    if (!iso) return '';
-    const datePart = iso.split('T')[0];
-    const [year, month, day] = datePart.split('-').map(Number);
+    const [year, month, day] = iso.split('-').map(Number);
     return new Date(year, month - 1, day).toLocaleDateString('es-CO', {
       day: '2-digit',
       month: 'short',

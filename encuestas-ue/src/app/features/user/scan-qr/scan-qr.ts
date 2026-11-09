@@ -131,7 +131,7 @@ export class ScanQrComponent implements AfterViewInit, OnDestroy {
         this.cargando.set(true);
         this.errorMessage.set('');
 
-        this.encuestasService.getSurveyByQR(surveyId).subscribe({
+        this.encuestasService.obtenerEncuestaPorId(surveyId).subscribe({
           next: () => {
             this.cargando.set(false);
             this.router.navigate(['/user/responder-encuesta', surveyId]);

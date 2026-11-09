@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import {
   FormArray,
   FormControl,
@@ -8,28 +8,30 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
-import { EncuestasService, CrearEncuestaPayload } from '../../../../core/services/encuestas.service';
+import { EncuestasService, CrearEncuestaPayload, mensajeError } from '../../../../core/services/encuestas.service';
+import { Encuesta } from '../../../../shared/models/encuesta.models';
 import { EstadoEncuestaAdmin, ESTADOS_ENCUESTA_ADMIN } from '../../../../shared/models/estado-encuesta-admin.model';
-import { TipoPregunta, TIPOS_PREGUNTA } from '../../../../shared/models/pregunta.model';
+import { Pregunta, TipoPregunta, TIPOS_PREGUNTA } from '../../../../shared/models/pregunta.model';
 
+/** Sirve para crear una encuesta y, si la ruta trae un ID, para editar un borrador. */
 @Component({
   selector: 'app-create-survey',
   imports: [ReactiveFormsModule],
   templateUrl: './create-survey.html',
   styleUrl: './create-survey.scss',
 })
-export class CreateSurvey {
+export class CreateSurvey implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly encuestasService = inject(EncuestasService);
 
+  private readonly encuestaId = this.route.snapshot.paramMap.get('id');
+  private encuestaOriginal: Encuesta | null = null;
+  protected readonly modoEdicion = this.encuestaId !== null;
+
   protected readonly saving = signal(false);
   protected readonly saved = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
-
-  /** 'create': encuesta nueva · 'edit': modificar una existente · 'view': solo lectura. */
-  protected readonly mode = signal<'create' | 'edit' | 'view'>('create');
-  private surveyId: string | null = null;
 
   protected readonly estados = ESTADOS_ENCUESTA_ADMIN;
   protected readonly tiposPregunta = TIPOS_PREGUNTA;
@@ -47,17 +49,43 @@ export class CreateSurvey {
       nonNullable: true,
       validators: [Validators.required],
     }),
+    closeDate: new FormControl('', { nonNullable: true }),
     questions: new FormArray([this.createQuestion()]),
   });
 
-  constructor() {
-    // Rutas: /surveys/create (nueva) · /surveys/:id/edit (editar) · /surveys/:id (ver)
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.surveyId = id;
-      this.mode.set(this.route.snapshot.data['mode'] === 'view' ? 'view' : 'edit');
-      this.cargarEncuesta(id);
+  ngOnInit(): void {
+    if (this.encuestaId) {
+      this.cargarEncuesta(this.encuestaId);
     }
+  }
+
+  private cargarEncuesta(id: string): void {
+    this.encuestasService.obtenerEncuestaPorId(id).subscribe({
+      next: (encuesta) => {
+        if (encuesta.estado !== 'BORRADOR') {
+          Swal.fire('No se puede editar', 'Solo se pueden editar encuestas en borrador.', 'info');
+          this.router.navigate(['/admin/surveys', id]);
+          return;
+        }
+
+        this.encuestaOriginal = encuesta;
+        this.surveyForm.patchValue({
+          title: encuesta.titulo,
+          description: encuesta.descripcion ?? '',
+          closeDate: encuesta.fechaCierre ? new Date(encuesta.fechaCierre).toLocaleDateString('en-CA') : '',
+        });
+
+        this.questions.clear();
+        encuesta.preguntas.forEach((pregunta) => this.questions.push(this.createQuestion(pregunta)));
+        if (encuesta.preguntas.length === 0) {
+          this.questions.push(this.createQuestion());
+        }
+      },
+      error: (err) => {
+        Swal.fire('Encuesta no disponible', mensajeError(err, 'No pudimos cargar la encuesta.'), 'error');
+        this.router.navigate(['/admin/surveys']);
+      },
+    });
   }
 
   get questions(): FormArray {
@@ -86,66 +114,21 @@ export class CreateSurvey {
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
 
-  createQuestion(): FormGroup {
+  createQuestion(pregunta?: Pregunta): FormGroup {
+    const opciones = (pregunta?.opciones ?? []).filter((opcion) => opcion.estado === 'ACTIVA');
+
     return new FormGroup({
-      text: new FormControl('', {
+      id: new FormControl<string | null>(pregunta?.id ?? null),
+      text: new FormControl(pregunta?.texto ?? '', {
         nonNullable: true,
         validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
       }),
-      type: new FormControl<TipoPregunta>('ESCALA', { nonNullable: true, validators: [Validators.required] }),
-      required: new FormControl(true, { nonNullable: true }),
-      status: new FormControl<'ACTIVA' | 'INACTIVA'>('ACTIVA', { nonNullable: true }),
+      type: new FormControl<TipoPregunta>(pregunta?.tipo ?? 'ESCALA', { nonNullable: true, validators: [Validators.required] }),
+      required: new FormControl(pregunta?.requerida ?? true, { nonNullable: true }),
+      status: new FormControl<'ACTIVA' | 'INACTIVA'>(pregunta?.estado ?? 'ACTIVA', { nonNullable: true }),
       // Solo se usa si type === 'SELECCION_MULTIPLE'; una opción por línea en el textarea.
-      options: new FormControl('', { nonNullable: true }),
+      options: new FormControl(pregunta?.tipo === 'SELECCION_MULTIPLE' ? opciones.map((o) => o.texto).join('\n') : '', { nonNullable: true }),
     });
-  }
-
-  /** Carga la encuesta existente (con sus preguntas) en el formulario, para editarla o verla. */
-  private cargarEncuesta(id: string): void {
-    this.encuestasService.obtenerEncuestaPorId(id).subscribe({
-      next: (s: any) => {
-        this.surveyForm.patchValue({
-          title: s.title ?? '',
-          description: s.description ?? '',
-          status: Number(s.status) === 1 ? 'PUBLICADA' : 'INACTIVA',
-        });
-
-        this.questions.clear();
-        (s.questions ?? []).forEach((q: any) => this.questions.push(this.preguntaDesdeBackend(q)));
-        if (this.questions.length === 0) {
-          this.questions.push(this.createQuestion());
-        }
-
-        if (this.mode() === 'view') {
-          this.surveyForm.disable();
-        }
-      },
-      error: (err) => {
-        console.error('Error al cargar la encuesta', err);
-        Swal.fire('Error', 'No pudimos cargar la encuesta.', 'error');
-        this.router.navigate(['/admin/surveys']);
-      },
-    });
-  }
-
-  /** Convierte una pregunta del backend ('Escala' | 'Abierta' | 'Seleccion Multiple') al formulario. */
-  private preguntaDesdeBackend(q: any): FormGroup {
-    const tipo: TipoPregunta =
-      q.questionType === 'Escala' ? 'ESCALA' :
-      q.questionType === 'Abierta' ? 'ABIERTA' :
-      'SELECCION_MULTIPLE';
-
-    const grupo = this.createQuestion();
-    grupo.patchValue({
-      text: q.questionText,
-      type: tipo,
-      required: q.isRequired,
-      status: 'ACTIVA',
-      options: tipo === 'SELECCION_MULTIPLE'
-        ? (q.options ?? []).map((o: any) => o.optionText).join('\n')
-        : '',
-    });
-    return grupo;
   }
 
   addQuestion(): void {
@@ -164,11 +147,17 @@ export class CreateSurvey {
   }
 
   save(): void {
-    if (this.mode() === 'view') return;
-
     if (this.surveyForm.invalid) {
       this.surveyForm.markAllAsTouched();
       this.saved.set(false);
+      return;
+    }
+
+    const faltanOpciones = this.questions.controls.some(
+      (question) => question.get('type')?.value === 'SELECCION_MULTIPLE' && this.getOpciones(question.get('options')?.value).length === 0,
+    );
+    if (faltanOpciones) {
+      this.errorMessage.set('Las preguntas de selección múltiple necesitan al menos una opción.');
       return;
     }
 
@@ -176,40 +165,40 @@ export class CreateSurvey {
     this.saved.set(false);
     this.errorMessage.set(null);
 
+    const closeDate = this.surveyForm.controls.closeDate.value;
     const payload: CrearEncuestaPayload = {
       titulo: this.surveyForm.controls.title.value.trim(),
       descripcion: this.surveyForm.controls.description.value.trim(),
       estado: this.surveyForm.controls.status.value,
+      // La encuesta se puede responder hasta el final del día elegido
+      fechaCierre: closeDate ? new Date(`${closeDate}T23:59:59`).toISOString() : null,
       preguntas: this.questions.controls.map((question, index) => ({
+        id: question.get('id')?.value ?? undefined,
         texto: question.get('text')?.value.trim(),
         tipo: question.get('type')?.value,
         requerida: question.get('required')?.value,
         displayOrder: index + 1,
         estado: question.get('status')?.value,
-        opciones:
-          question.get('type')?.value === 'SELECCION_MULTIPLE'
-            ? (question.get('options')?.value as string)
-                .split('\n')
-                .map((o: string) => o.trim())
-                .filter(Boolean)
-            : undefined,
+        opciones: question.get('type')?.value === 'SELECCION_MULTIPLE' ? this.getOpciones(question.get('options')?.value) : undefined,
       })),
     };
 
-    const solicitud = this.mode() === 'edit' && this.surveyId
-      ? this.encuestasService.actualizarEncuesta(this.surveyId, payload)
-      : this.encuestasService.crearEncuesta(payload);
+    const original = this.encuestaOriginal;
+    const guardado = original ? this.encuestasService.guardarEdicion(original, payload) : this.encuestasService.crearEncuesta(payload);
 
-    solicitud.subscribe({
+    guardado.subscribe({
       next: () => {
         this.saving.set(false);
-        this.saved.set(true);
-        this.router.navigate(['/admin/surveys']);
+        if (original) {
+          this.router.navigate(['/admin/surveys', original.id]);
+        } else {
+          this.saved.set(true);
+        }
       },
       error: (err) => {
         console.error('Error al guardar la encuesta', err);
         this.saving.set(false);
-        this.errorMessage.set(err.error?.error || 'No pudimos guardar la encuesta. Intenta de nuevo.');
+        this.errorMessage.set(mensajeError(err, 'No pudimos guardar la encuesta. Intenta de nuevo.'));
       },
     });
   }

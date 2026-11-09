@@ -6,77 +6,173 @@
     </div>
 
     <div class="dashboard-filters row g-3 align-items-end">
-      <div class="col-12 col-sm-5">
-        <label for="filter-date" class="form-label small fw-semibold">Filtrar por fecha</label>
-        <input id="filter-date" type="date" class="form-control" [(ngModel)]="selectedDate" (ngModelChange)="onDateChange()">
+      <div class="col-6 col-md-2">
+        <label for="filter-from" class="form-label small fw-semibold">Desde</label>
+        <input id="filter-from" type="date" class="form-control" [ngModel]="fechaDesde()" (ngModelChange)="onFechaDesde($event)">
       </div>
 
-      <div class="col-12 col-sm-7">
+      <div class="col-6 col-md-2">
+        <label for="filter-to" class="form-label small fw-semibold">Hasta</label>
+        <input id="filter-to" type="date" class="form-control" [ngModel]="fechaHasta()" (ngModelChange)="onFechaHasta($event)">
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label for="filter-status" class="form-label small fw-semibold">Estado</label>
+        <select id="filter-status" class="form-select filter-select" [ngModel]="filtroEstado()" (ngModelChange)="onEstadoChange($event)">
+          <option value="TODOS">Todos</option>
+          <option value="PUBLICADA">Publicada</option>
+          <option value="INACTIVA">Inactiva</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-5">
         <label for="filter-survey" class="form-label small fw-semibold">Encuesta</label>
-        <select id="filter-survey" class="form-select filter-select" [(ngModel)]="selectedSurvey" (ngModelChange)="onSurveyChange($event)">
-          <option value="">Seleccionar encuesta...</option>
-          @for (survey of filteredSurveys; track survey.survey_id) {
-            <option [value]="survey.survey_id">{{ survey.title }}</option>
+        <select id="filter-survey" class="form-select filter-select" [ngModel]="selectedSurvey()" (ngModelChange)="onSurveyChange($event)">
+          @for (s of surveys(); track s.id) {
+            <option [value]="s.id">{{ s.titulo }}</option>
           }
         </select>
       </div>
     </div>
   </div>
 
-  <div class="kpi-grid mt-4">
+  @if (errorMensaje()) {
+    <div class="alert alert-danger mt-3" role="alert">{{ errorMensaje() }}</div>
+  }
+
+  <!-- Resumen general -->
+  <h2 class="section-title mt-4">Resumen general</h2>
+  <div class="kpi-grid">
+    <div class="kpi-card shadow-sm rounded-3">
+      <div class="kpi-card__top">
+        <span class="kpi-card__label">ENCUESTAS</span>
+        <span class="material-symbols-outlined kpi-card__icon kpi-card__icon--primary">assignment</span>
+      </div>
+      <div class="kpi-card__value">{{ resumen().total }}</div>
+      <p class="kpi-card__detail">
+        {{ resumen().publicadas }} publicadas · {{ resumen().borradores }} borradores · {{ resumen().inactivas }} inactivas
+      </p>
+    </div>
+
+    <div class="kpi-card shadow-sm rounded-3">
+      <div class="kpi-card__top">
+        <span class="kpi-card__label">RESPUESTAS RECIBIDAS</span>
+        <span class="material-symbols-outlined kpi-card__icon kpi-card__icon--primary">forum</span>
+      </div>
+      <div class="kpi-card__value">{{ resumen().respuestas }}</div>
+      <p class="kpi-card__detail">En todas las encuestas</p>
+    </div>
+
     <div class="kpi-card shadow-sm rounded-3">
       <div class="kpi-card__top">
         <span class="kpi-card__label">TOTAL DE RESPUESTAS</span>
         <span class="material-symbols-outlined kpi-card__icon kpi-card__icon--primary">group</span>
       </div>
-      <div class="kpi-card__value">{{ kpis.totalRespuestas }}</div>
+      <div class="kpi-card__value">{{ kpis().totalRespuestas }}</div>
+      <p class="kpi-card__detail">En la encuesta y el periodo elegidos</p>
     </div>
+  </div>
 
+  <!-- Encuesta seleccionada -->
+  <h2 class="section-title">Encuesta seleccionada</h2>
+  <div class="kpi-grid">
     <div class="kpi-card shadow-sm rounded-3">
       <div class="kpi-card__top">
         <span class="kpi-card__label">PROMEDIO GENERAL (Escalas)</span>
         <span class="material-symbols-outlined kpi-card__icon kpi-card__icon--star">star</span>
       </div>
       <div class="kpi-card__value">
-        {{ kpis.promedio }}
+        {{ kpis().promedio }}
         <span class="kpi-card__value-sub">/ 5.0</span>
       </div>
     </div>
+
+    <div class="kpi-card shadow-sm rounded-3">
+      <div class="kpi-card__top">
+        <span class="kpi-card__label">% SATISFACCIÓN</span>
+        <span class="material-symbols-outlined kpi-card__icon kpi-card__icon--primary">thumb_up</span>
+      </div>
+      <div class="kpi-card__value">{{ clasificacion().pctPositivas }}%</div>
+      <p class="kpi-card__detail">Respuestas de 4 y 5 en preguntas de escala</p>
+    </div>
+
+    <div class="kpi-card shadow-sm rounded-3">
+      <div class="kpi-card__top">
+        <span class="kpi-card__label">% PARTICIPACIÓN</span>
+        <span class="material-symbols-outlined kpi-card__icon kpi-card__icon--primary">pie_chart</span>
+      </div>
+      <div class="kpi-card__value">{{ kpis().participacion }}%</div>
+      <p class="kpi-card__detail">{{ kpis().estudiantesRespondieron }} de {{ kpis().totalEstudiantes }} estudiantes activos</p>
+    </div>
   </div>
 
-  @if (isLoading) {
+  <!-- Clasificación -->
+  <div class="sentiment-card shadow-sm rounded-3">
+    <h2 class="averages-card__title">Clasificación de respuestas de escala</h2>
+
+    <div class="sentiment-grid">
+      <div class="sentiment-item sentiment-item--positive">
+        <span>Positivas (4 y 5)</span>
+        <strong>{{ clasificacion().positivas }}</strong>
+        <small>{{ clasificacion().pctPositivas }}%</small>
+      </div>
+      <div class="sentiment-item sentiment-item--neutral">
+        <span>Neutras (3)</span>
+        <strong>{{ clasificacion().neutras }}</strong>
+        <small>{{ clasificacion().pctNeutras }}%</small>
+      </div>
+      <div class="sentiment-item sentiment-item--negative">
+        <span>Negativas (1 y 2)</span>
+        <strong>{{ clasificacion().negativas }}</strong>
+        <small>{{ clasificacion().pctNegativas }}%</small>
+      </div>
+    </div>
+
+    @if (clasificacion().total > 0) {
+      <div class="sentiment-bar" role="img" aria-label="Proporción de respuestas positivas, neutras y negativas">
+        <div class="sentiment-bar__part sentiment-bar__part--positive" [style.width.%]="clasificacion().pctPositivas"></div>
+        <div class="sentiment-bar__part sentiment-bar__part--neutral" [style.width.%]="clasificacion().pctNeutras"></div>
+        <div class="sentiment-bar__part sentiment-bar__part--negative" [style.width.%]="clasificacion().pctNegativas"></div>
+      </div>
+    }
+  </div>
+
+  @if (cargando()) {
     <div class="text-center my-5 py-5">
       <div class="spinner-border text-primary" role="status"></div>
       <p class="mt-2 fw-semibold text-muted">Calculando estadísticas...</p>
     </div>
-  } @else if (activeQuestion) {
+  } @else if (activeQuestion(); as activa) {
     <div class="charts-grid mt-4">
       <div class="chart-card shadow-sm rounded-3">
         <div class="chart-card__head">
           <div>
-            <h2 class="chart-card__title">{{ activeQuestion.label }}</h2>
-            <p class="chart-card__sub text-muted small">Distribución de respuestas</p>
+            <h2 class="chart-card__title">{{ activa.label }}</h2>
+            <p class="chart-card__sub text-muted small">
+              Distribución de respuestas (1-5) ·
+              {{ activa.positivas }} positivas · {{ activa.neutras }} neutras · {{ activa.negativas }} negativas
+            </p>
           </div>
         </div>
 
         <div class="bar-chart mt-3">
           <div class="bar-chart__bars">
-            @for (bar of activeQuestion.bars; track bar.label) {
+            @for (bar of activa.bars; track bar.label) {
               <div class="bar-group">
                 <div class="bar-group__bar-wrap">
                   <span class="bar-group__tooltip">{{ bar.value }}</span>
                   <div class="bar-group__bar" [class.bar-group__bar--highlight]="bar.highlight" [style.height.%]="bar.pct"></div>
                 </div>
-                <span class="bar-group__label text-center" style="font-size: 0.75rem; word-break: break-word;">{{ bar.label }}</span>
+                <span class="bar-group__label text-center">{{ bar.label }}</span>
               </div>
             }
           </div>
         </div>
 
         <div class="question-tabs mt-4 border-top pt-3">
-          @for (q of questions; track q.id) {
-            <button type="button" class="question-tab" [class.question-tab--active]="activeQuestionId === q.id" (click)="selectQuestion(q.id)">
-              P{{ $index + 1 }}
+          @for (q of questions(); track q.id) {
+            <button type="button" class="question-tab" [class.question-tab--active]="activeQuestionId() === q.id" (click)="selectQuestion(q.id)">
+              P{{ q.id }}
             </button>
           }
         </div>
@@ -85,32 +181,72 @@
       <div class="averages-card shadow-sm rounded-3">
         <h2 class="averages-card__title">Desempeño por pregunta</h2>
         <div class="averages-list">
-          @for (q of questions; track q.id) {
+          @for (q of preguntasVisibles(); track q.id) {
             <div class="avg-item" [class.avg-item--last]="$last" (click)="selectQuestion(q.id)" style="cursor:pointer">
               <div class="avg-item__row">
                 <p class="avg-item__text">{{ q.label }}</p>
-                <span class="avg-item__badge"
-                      [class.bg-secondary]="q.tipo !== 'ESCALA'"
-                      [class.text-white]="q.tipo !== 'ESCALA'"
-                      [class.avg-item__badge--low]="q.tipo === 'ESCALA' && q.avg < 4"
-                      [class.avg-item__badge--error]="q.tipo === 'ESCALA' && q.avg < 3.5">
-                  {{ q.tipo === 'ESCALA' ? q.avg : 'N/A' }}
+                <span class="avg-item__badge" [class.avg-item__badge--low]="q.avg < 4" [class.avg-item__badge--error]="q.avg < 3.5">
+                  {{ q.avg }}
                 </span>
               </div>
-              @if (q.tipo === 'ESCALA') {
-                <div class="avg-item__track">
-                  <div class="avg-item__fill" [class.avg-item__fill--low]="q.avg < 4" [class.avg-item__fill--error]="q.avg < 3.5" [style.width.%]="(q.avg / 5) * 100"></div>
-                </div>
-              }
+              <div class="avg-item__track">
+                <div class="avg-item__fill" [class.avg-item__fill--low]="q.avg < 4" [class.avg-item__fill--error]="q.avg < 3.5" [style.width.%]="(q.avg / 5) * 100"></div>
+              </div>
             </div>
           }
         </div>
+
+        @if (hayMasPreguntas()) {
+          <button class="see-all-btn" type="button" id="btn-ver-preguntas" (click)="verTodas.set(!verTodas())">
+            {{ verTodas() ? 'Ver menos preguntas' : 'Ver todas las preguntas' }}
+          </button>
+        }
       </div>
     </div>
-  } @else if (selectedSurvey) {
+  }
+
+  @if (seleccionMultiple().length > 0) {
+    <h2 class="section-title mt-4">Preguntas de selección múltiple</h2>
+    <div class="detail-grid">
+      @for (pregunta of seleccionMultiple(); track pregunta.id) {
+        <div class="detail-card shadow-sm rounded-3">
+          <h3>{{ pregunta.label }}</h3>
+          @for (opcion of pregunta.opciones; track opcion.texto) {
+            <div class="option-row">
+              <div class="option-row__text">
+                <span>{{ opcion.texto }}</span>
+                <span>{{ opcion.valor }} · {{ opcion.pct }}%</span>
+              </div>
+              <div class="avg-item__track">
+                <div class="avg-item__fill" [style.width.%]="opcion.pct"></div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (comentarios().length > 0) {
+    <h2 class="section-title mt-4">Comentarios</h2>
+    <div class="detail-grid">
+      @for (pregunta of comentarios(); track pregunta.id) {
+        <div class="detail-card shadow-sm rounded-3">
+          <h3>{{ pregunta.label }}</h3>
+          @for (respuesta of pregunta.respuestas; track $index) {
+            <p class="comment">{{ respuesta }}</p>
+          } @empty {
+            <p class="comment-empty">Aún no hay comentarios en este periodo.</p>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (surveys().length === 0 && !errorMensaje()) {
     <div class="text-center my-5">
       <span class="material-symbols-outlined text-muted" style="font-size: 48px;">bar_chart</span>
-      <p class="mt-2 text-muted">La encuesta no tiene preguntas de escala ni de selección múltiple (o no tiene respuestas).</p>
+      <p class="mt-2 text-muted">Todavía no hay encuestas publicadas para analizar.</p>
     </div>
   }
 </section>

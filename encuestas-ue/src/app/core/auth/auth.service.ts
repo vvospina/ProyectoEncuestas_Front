@@ -1,100 +1,90 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { Auth, User, browserLocalPersistence, OAuthProvider, onAuthStateChanged, setPersistence, signInWithEmailAndPassword,
+  signInWithPopup, signOut, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail} from 'firebase/auth';
+import { firebaseAuth } from '../config/firebase.config';
 import { environment } from '../../../environment/environment';
-import Swal from 'sweetalert2';
-
-
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-  status: number;
-}
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { firestoreDb } from '../config/firebase.config';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+const ROL_ADMIN = 1;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  // Usamos la URL configurada en el environment
-  private apiUrl = environment.apiUrl;
+  private auth: Auth = firebaseAuth;
+  private http = inject(HttpClient);
 
-  currentUser = signal<any | null>(null);
+  currentUser = signal<User | null>(null);
   errorMessage = signal<string | null>(null);
   photoBase64 = signal<string | null>(null);
   loading = signal(false);
-
+  
+  // 1. Declaración de las signals faltantes
   authReady = signal<boolean>(false);
   profileUpdateSuccess = signal<boolean>(false);
   passwordResetSent = signal(false);
+  userRole = signal<'ADMIN' | 'USER' | null>(null);
 
-  // Alineamos los tipos de roles para coincidir con 'ADMIN' y 'USER' del HTML
-  userRole = signal<'ADMIN' | 'USER' | 'Docente' | null>(null);
+  constructor(private router: Router) {
+    onAuthStateChanged(this.auth, async (user) => {
+      this.currentUser.set(user);
+      await this.actualizarRol(user);
+      await this.cargarFotoPerfil(user);
+      this.authReady.set(true);
+      this.resolverAuthReady();
+    });
+  }
 
+  // 2. Método wrapper para actualizar la signal del rol cuando cambia el Auth State
+  private async actualizarRol(user: User | null): Promise<void> {
+    if (!user) {
+      this.userRole.set(null);
+      return;
+    }
+    const rol = await this.obtenerRol();
+    this.userRole.set(rol);
+  }
   private resolverAuthReady!: () => void;
   readonly authReadyPromise = new Promise<void>((resolve) => {
     this.resolverAuthReady = resolve;
   });
 
-  constructor(private router: Router, private http: HttpClient) {
-    this.restaurarSesion();
-  }
-
-  /** El backend devuelve `name`; el front (perfil) lee `displayName`. Dejamos ambos disponibles. */
-  private normalizarUsuario(user: any): any {
-    return { ...user, displayName: user.displayName ?? user.name ?? '' };
-  }
-
-  private restaurarSesion() {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-
-    if (token && userStr) {
-      const user = this.normalizarUsuario(JSON.parse(userStr));
-      this.currentUser.set(user);
-
-      // El backend expone el rol como roleId (1 = admin, 2 = usuario)
-      const esAdmin = Number(user.roleId ?? user.role_id) === 1 || user.rol === 'Administrador';
-      this.userRole.set(esAdmin ? 'ADMIN' : user.rol || 'USER');
-      this.photoBase64.set(user.avatarBase64 || user.foto_perfil || null);
+  private async cargarFotoPerfil(user: User | null): Promise<void> {
+    if (!user) {
+      this.photoBase64.set(null);
+      return;
     }
-    this.authReady.set(true);
-    this.resolverAuthReady();
+    // Si la foto no se puede leer, la sesión debe continuar igual
+    try {
+      const snapshot = await getDoc(doc(firestoreDb, 'users', user.uid));
+      this.photoBase64.set(snapshot.exists() ? (snapshot.data()['photoBase64'] ?? null) : null);
+    } catch (error) {
+      console.error('No se pudo cargar la foto de perfil', error);
+      this.photoBase64.set(null);
+    }
   }
 
-  async registerWithEmail(name: string, email: string, password: string): Promise<void> {
+  async updateUserProfile(nombre: string, apellido: string, fotoBase64?: string): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.profileUpdateSuccess.set(false);
     try {
+      const user = this.auth.currentUser;
+      if (!user) throw new Error('No hay usuario autenticado.');
 
-      const payload: RegisterRequest = { name, email, password, status: 1 };
+      await updateProfile(user, { displayName: `${nombre} ${apellido}`.trim() });
+      await this.sincronizarNombre(`${nombre} ${apellido}`.trim());
 
-      await firstValueFrom(this.http.post(`${this.apiUrl}/users`, payload));
+      if (fotoBase64) {
+        await setDoc(doc(firestoreDb, 'users', user.uid), { photoBase64: fotoBase64 }, { merge: true });
+        this.photoBase64.set(fotoBase64);
+      }
 
-      // 1. Notificación visual de éxito
-      Swal.fire({
-        icon: 'success',
-        title: '¡Cuenta creada!',
-        text: 'Tu usuario ha sido registrado correctamente. Redirigiendo...',
-        timer: 2000,
-        showConfirmButton: false
-      });
-
-      // 2. Esperamos 1.5 segundos para que el usuario lea el mensaje antes de redirigir
-      setTimeout(() => {
-        this.router.navigate(['/login']);
-      }, 1500);
-
-    } catch (error: any) {
-      console.error(error);
-
-      this.errorMessage.set(
-        error.error?.details || // para leer el backend
-        error.error?.message ||
-        error.error?.error ||
-        (error.status === 0
-          ? 'No se pudo conectar con el backend. Verifica que esté activo.'
-          : 'No pudimos crear la cuenta. Verifica los datos.'),
-      );
+      this.currentUser.set(user);
+      this.profileUpdateSuccess.set(true);
+    } catch {
+      this.errorMessage.set('No pudimos actualizar tu perfil. Intenta de nuevo.');
     } finally {
       this.loading.set(false);
     }
@@ -104,112 +94,46 @@ export class AuthService {
     this.loading.set(true);
     this.errorMessage.set(null);
     try {
-      const payload = { email, password };
-      const response: any = await firstValueFrom(this.http.post(`${this.apiUrl}/users/login`, payload));
-
-      // Guardamos el token y datos en localStorage
-      this.guardarSesion(response);
-
-      // Notificación de bienvenida
-      Swal.fire({
-        icon: 'success',
-        title: '¡Bienvenido!',
-        text: 'Inicio de sesión exitoso.',
-        timer: 1500,
-        showConfirmButton: false
-      });
-
-      setTimeout(() => {
-        this.afterLogin();
-      }, 1500);
-    } catch (error: any) {
-      this.errorMessage.set(error.error?.error || 'Correo o contraseña incorrectos.');
+      await setPersistence(this.auth, browserLocalPersistence);
+      await signInWithEmailAndPassword(this.auth, email, password);
+      await this.afterLogin();
+    } catch (error) {
+      this.errorMessage.set(this.traducirError(error));
     } finally {
       this.loading.set(false);
     }
   }
 
-  private guardarSesion(data: any) {
-    const token = data.token || data.access_token;
-    const userData = this.normalizarUsuario(data.user || data.usuario || data);
-
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    this.currentUser.set(userData);
-    this.photoBase64.set(userData.avatarBase64 || userData.foto_perfil || null);
-
-    // Mapeo explicito hacia 'ADMIN' o 'USER' para compatibilidad visual (roleId 1 = admin)
-    const esAdmin = Number(userData.roleId ?? userData.role_id) === 1 || userData.rol === 'Administrador';
-    this.userRole.set(esAdmin ? 'ADMIN' : 'USER');
-  }
-
-  async updateUserProfile(nombre: string, apellido: string, fotoBase64?: string): Promise<void> {
+  async loginWithMicrosoft(): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
-    this.profileUpdateSuccess.set(false);
     try {
-      // Concatenamos nombre y apellido en la propiedad "name" que espera la BD
-      const nombreCompleto = `${nombre} ${apellido}`.trim();
+      const provider = new OAuthProvider('microsoft.com');
+      provider.setCustomParameters({ prompt: 'select_account' });
 
-      const currentUserData = this.currentUser() || {};
-      const userId = currentUserData.id ?? currentUserData.userId;
-
-      const payload: { name: string; avatarBase64?: string } = { name: nombreCompleto };
-      if (fotoBase64) {
-        payload.avatarBase64 = fotoBase64;
-      }
-
-      const token = localStorage.getItem('token');
-      const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-
-      await firstValueFrom(this.http.put(`${this.apiUrl}/users/${userId}`, payload, { headers }));
-
-      // Actualizamos el estado global en localStorage y Signals
-      const updatedUser = {
-        ...currentUserData,
-        name: nombreCompleto,
-        displayName: nombreCompleto,
-        ...(fotoBase64 ? { avatarBase64: fotoBase64 } : {}),
-      };
-
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      this.currentUser.set(updatedUser);
-
-      if (fotoBase64) {
-        this.photoBase64.set(fotoBase64);
-      }
-
-      this.profileUpdateSuccess.set(true);
-    } catch (error: any) {
-      console.error('Error al actualizar perfil:', error);
-      this.errorMessage.set(error.error?.error || 'No pudimos actualizar tu perfil en la base de datos.');
+      await setPersistence(this.auth, browserLocalPersistence);
+      await signInWithPopup(this.auth, provider);
+      await this.afterLogin();
+    } catch (error) {
+      this.errorMessage.set(this.traducirError(error));
     } finally {
       this.loading.set(false);
     }
   }
 
-  async logout(): Promise<void> {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    this.currentUser.set(null);
-    this.userRole.set(null);
-    this.router.navigate(['/session-closed']);
-  }
-
-  async getAccessToken(): Promise<string | null> {
-    return localStorage.getItem('token');
-  }
-
-  tieneSesionActiva(): boolean {
-    return !!localStorage.getItem('token');
-  }
-
-  private async afterLogin(): Promise<void> {
-    const rol = this.userRole();
-    if (rol === 'ADMIN') {
-      this.router.navigate(['/admin/dashboard']);
-    } else {
-      this.router.navigate(['/user/available-surveys']);
+  async registerWithEmail(nombre: string, email: string, password: string): Promise<void> {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    try {
+      await setPersistence(this.auth, browserLocalPersistence);
+      const credential = await createUserWithEmailAndPassword(this.auth, email, password);
+      await updateProfile(credential.user, { displayName: nombre.trim() });
+      await this.sincronizarNombre(nombre.trim());
+      await this.afterLogin();
+    } catch (error) {
+      this.errorMessage.set(this.traducirErrorRegistro(error));
+    } finally {
+      this.loading.set(false);
     }
   }
 
@@ -218,35 +142,123 @@ export class AuthService {
     this.errorMessage.set(null);
     this.passwordResetSent.set(false);
     try {
-      await firstValueFrom(this.http.post(`${this.apiUrl}/forgot-password`, { email }));
-
+      await sendPasswordResetEmail(this.auth, email);
       this.passwordResetSent.set(true);
-    } catch (error: any) {
-      this.errorMessage.set(
-        error.error?.details ||
-        error.error?.message ||
-        error.error?.error ||
-        (error.status === 0
-          ? 'No se pudo conectar con el backend. Verifica que esté activo.'
-          : 'No pudimos enviar el correo de recuperación. Intenta de nuevo.'),
-      );
+    } catch (error) {
+      const code = (error as { code?: string })?.code ?? '';
+      if (code === 'auth/user-not-found') {
+        this.passwordResetSent.set(true);
+      } else {
+        this.errorMessage.set(this.traducirErrorRecuperacion(error));
+      }
     } finally {
       this.loading.set(false);
     }
   }
 
+  private traducirErrorRecuperacion(error: unknown): string {
+    const code = (error as { code?: string })?.code ?? '';
+    switch (code) {
+      case 'auth/invalid-email':
+        return 'El correo no tiene un formato válido.';
+      case 'auth/too-many-requests':
+        return 'Demasiados intentos. Espera un momento e inténtalo de nuevo.';
+      default:
+        return 'No pudimos enviar el correo de recuperación. Intenta de nuevo.';
+    }
+  }
 
-  async resetPasswordConfirm(token: string, newPassword: string): Promise<void> {
-    this.loading.set(true);
-    this.errorMessage.set(null);
+  async logout(): Promise<void> {
+    await signOut(this.auth);
+    this.router.navigate(['/session-closed']);
+  }
+
+  async getIdToken(): Promise<string | null> {
+    const user = this.auth.currentUser;
+    return user ? user.getIdToken() : null;
+  }
+  /** Revisa el estado real de Firebase al instante, sin depender del signal. */
+  tieneSesionActiva(): boolean {
+    return !!this.auth.currentUser;
+  }
+
+  /** Un usuario inactivado por el administrador no puede seguir en la aplicación. */
+  private async cerrarSesionPorInactivo(): Promise<void> {
+    await signOut(this.auth);
+    await this.router.navigate(['/login']);
+    this.errorMessage.set('Tu cuenta se encuentra inactiva. Comunícate con el administrador.');
+  }
+
+  /** El backend crea al usuario en su primer ingreso; aquí se le deja el nombre completo. */
+  private async sincronizarNombre(nombre: string): Promise<void> {
     try {
-      await firstValueFrom(this.http.post(`${this.apiUrl}/reset-password`, { token, newPassword }));
-      Swal.fire('¡Éxito!', 'Tu contraseña ha sido actualizada correctamente. Ya puedes iniciar sesión.', 'success');
-      this.router.navigate(['/login']);
-    } catch (error: any) {
-      this.errorMessage.set(error.error?.error || 'No se pudo actualizar la contraseña. Intenta enviar otro correo de recuperación.');
-    } finally {
-      this.loading.set(false);
+      const perfil = await firstValueFrom(this.http.get<{ id: number }>(`${environment.apiUrl}/users/me`));
+      await firstValueFrom(this.http.put(`${environment.apiUrl}/users/${perfil.id}`, { name: nombre }));
+    } catch (error) {
+      console.error('No se pudo actualizar el nombre en el backend', error);
+    }
+  }
+
+  private async afterLogin(): Promise<void> {
+    const rol = await this.obtenerRol();
+    if (!this.tieneSesionActiva()) return;
+    this.userRole.set(rol);
+
+    // Vuelve a la pantalla que pidió antes de iniciar sesión (por ejemplo, un QR)
+    const destino = this.router.parseUrl(this.router.url).queryParams['returnUrl'];
+    if (typeof destino === 'string' && destino.startsWith('/') && !destino.startsWith('//')) {
+      this.router.navigateByUrl(destino);
+      return;
+    }
+
+    if (rol === 'ADMIN') {
+      this.router.navigate(['/admin/dashboard']);
+    } else {
+      this.router.navigate(['/user/available-surveys']);
+    }
+  }
+
+  private async obtenerRol(): Promise<'ADMIN' | 'USER'> {
+  try {
+    const perfil = await firstValueFrom(
+      this.http.get<{ roleId: number }>(`${environment.apiUrl}/users/me`),
+    );
+    return perfil.roleId === ROL_ADMIN ? 'ADMIN' : 'USER';
+  } catch (error) {
+    if ((error as { status?: number })?.status === 403) {
+      await this.cerrarSesionPorInactivo();
+    }
+    return 'USER';
+  }
+}
+
+  private traducirError(error: unknown): string {
+    const code = (error as { code?: string })?.code ?? '';
+    switch (code) {
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+      case 'auth/user-not-found':
+        return 'Correo o contraseña incorrectos.';
+      case 'auth/too-many-requests':
+        return 'Demasiados intentos. Espera un momento e inténtalo de nuevo.';
+      case 'auth/popup-closed-by-user':
+        return 'Cerraste la ventana antes de terminar el inicio de sesión.';
+      default:
+        return 'No pudimos iniciar sesión. Intenta de nuevo.';
+    }
+  }
+
+  private traducirErrorRegistro(error: unknown): string {
+    const code = (error as { code?: string })?.code ?? '';
+    switch (code) {
+      case 'auth/email-already-in-use':
+        return 'Ya existe una cuenta con este correo.';
+      case 'auth/invalid-email':
+        return 'El correo no tiene un formato válido.';
+      case 'auth/weak-password':
+        return 'La contraseña debe tener al menos 6 caracteres.';
+      default:
+        return 'No pudimos crear la cuenta. Intenta de nuevo.';
     }
   }
 }

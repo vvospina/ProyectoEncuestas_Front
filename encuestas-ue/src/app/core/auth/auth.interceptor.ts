@@ -2,17 +2,23 @@ import { inject } from '@angular/core';
 import { HttpInterceptorFn } from '@angular/common/http';
 import { from, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environment/environment';
 
 /**
  * Un "interceptor" revisa TODAS las peticiones
- * que salen hacia el backend y les agrega el token REST almacenado antes
+ * que salen hacia el backend y les agrega el token de Firebase antes
  * de que se vayan. Así ningún componente tiene que acordarse de
  * poner el header manualmente.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  // El token solo viaja a nuestra API, nunca a otros servicios
+  if (!req.url.startsWith(environment.apiUrl)) {
+    return next(req);
+  }
+
   const auth = inject(AuthService);
 
-  return from(auth.getAccessToken()).pipe(
+  return from(auth.getIdToken()).pipe(
     switchMap((token) => {
       if (!token) {
         return next(req);

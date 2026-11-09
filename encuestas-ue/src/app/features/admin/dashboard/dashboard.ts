@@ -1,8 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { EncuestaDashboard } from '../../../shared/models/encuesta-dashboard.model';
-import { EncuestasService, EstadisticasEncuesta } from '../../../core/services/encuestas.service';
-import Swal from 'sweetalert2';
+import { EncuestasService, EstadisticasEncuesta, mensajeError } from '../../../core/services/encuestas.service';
+import { Encuesta } from '../../../shared/models/encuesta.models';
 
 interface Bar {
   label: string;
@@ -14,10 +13,14 @@ interface Bar {
 interface Question {
   id: number;
   label: string;
-  tipo: string;
   avg: number;
+  positivas: number;
+  neutras: number;
+  negativas: number;
   bars: Bar[];
 }
+
+const PREGUNTAS_INICIALES = 5;
 
 @Component({
   selector: 'app-dashboard',
@@ -29,276 +32,184 @@ interface Question {
 export class Dashboard implements OnInit {
   private readonly encuestasService = inject(EncuestasService);
 
-  selectedSurvey = '';
-  selectedDate = '';
-  isLoading = false;
+  private readonly encuestas = signal<Encuesta[]>([]);
+  private readonly estadisticas = signal<EstadisticasEncuesta | null>(null);
 
-  surveys: EncuestaDashboard[] = [];
-  questions: Question[] = [];
-  kpis = { totalRespuestas: 0, promedio: 0.0 };
-  activeQuestionId = -1;
+  errorMensaje = signal<string | null>(null);
+  cargando = signal(false);
+
+  // ── Filtros ──────────────────────────────────────────────
+  selectedSurvey = signal('');
+  filtroEstado = signal('TODOS');
+  fechaDesde = signal('');
+  fechaHasta = signal('');
+
+  surveys = computed(() => {
+    const estado = this.filtroEstado();
+    return this.encuestas()
+      .filter((encuesta) => encuesta.estado !== 'BORRADOR')
+      .filter((encuesta) => estado === 'TODOS' || encuesta.estado === estado);
+  });
+
+  // ── Resumen general ──────────────────────────────────────
+  resumen = computed(() => {
+    const encuestas = this.encuestas();
+    const contar = (estado: string) => encuestas.filter((encuesta) => encuesta.estado === estado).length;
+    return {
+      total: encuestas.length,
+      publicadas: contar('PUBLICADA'),
+      borradores: contar('BORRADOR'),
+      inactivas: contar('INACTIVA'),
+      respuestas: encuestas.reduce((total, encuesta) => total + (encuesta.totalRespuestas ?? 0), 0),
+    };
+  });
+
+  // ── Encuesta seleccionada ────────────────────────────────
+  kpis = computed(() => {
+    const datos = this.estadisticas();
+    return {
+      totalRespuestas: datos?.totalSubmissions ?? 0,
+      promedio: datos?.averageScore ?? 0,
+      participacion: datos?.participation ?? 0,
+      estudiantesRespondieron: datos?.studentsAnswered ?? 0,
+      totalEstudiantes: datos?.totalStudents ?? 0,
+    };
+  });
+
+  clasificacion = computed(() => {
+    const { positive = 0, neutral = 0, negative = 0 } = this.estadisticas()?.sentiment ?? {};
+    const total = positive + neutral + negative;
+    const porcentaje = (valor: number) => (total ? Math.round((valor / total) * 100) : 0);
+    return {
+      total,
+      positivas: positive,
+      neutras: neutral,
+      negativas: negative,
+      pctPositivas: porcentaje(positive),
+      pctNeutras: porcentaje(neutral),
+      pctNegativas: porcentaje(negative),
+    };
+  });
+
+  questions = computed<Question[]>(() =>
+    (this.estadisticas()?.questionsSummary ?? [])
+      .filter((pregunta) => pregunta.questionType === 'Escala' && pregunta.optionsCount)
+      .map((pregunta, indice) => ({
+        id: indice + 1,
+        label: pregunta.questionText,
+        avg: pregunta.average ?? 0,
+        positivas: pregunta.sentiment?.positive ?? 0,
+        neutras: pregunta.sentiment?.neutral ?? 0,
+        negativas: pregunta.sentiment?.negative ?? 0,
+        bars: this.aBarras(pregunta.optionsCount!),
+      })),
+  );
+
+  seleccionMultiple = computed(() =>
+    (this.estadisticas()?.questionsSummary ?? [])
+      .filter((pregunta) => pregunta.questionType === 'Seleccion Multiple' && pregunta.optionsCount)
+      .map((pregunta) => {
+        const opciones = Object.entries(pregunta.optionsCount!);
+        const total = opciones.reduce((suma, [, valor]) => suma + valor, 0);
+        return {
+          id: pregunta.questionId,
+          label: pregunta.questionText,
+          opciones: opciones.map(([texto, valor]) => ({
+            texto,
+            valor,
+            pct: total ? Math.round((valor / total) * 100) : 0,
+          })),
+        };
+      }),
+  );
+
+  comentarios = computed(() =>
+    (this.estadisticas()?.questionsSummary ?? [])
+      .filter((pregunta) => pregunta.questionType === 'Abierta')
+      .map((pregunta) => ({ id: pregunta.questionId, label: pregunta.questionText, respuestas: pregunta.openAnswers ?? [] })),
+  );
+
+  // ── Pregunta activa en el gráfico ─────────────────────────
+  activeQuestionId = signal(1);
+  activeQuestion = computed(() => this.questions().find((q) => q.id === this.activeQuestionId()) ?? null);
+
+  verTodas = signal(false);
+  preguntasVisibles = computed(() => (this.verTodas() ? this.questions() : this.questions().slice(0, PREGUNTAS_INICIALES)));
+  hayMasPreguntas = computed(() => this.questions().length > PREGUNTAS_INICIALES);
 
   ngOnInit(): void {
-    this.encuestasService.obtenerEncuestasAdmin().subscribe({
-      next: (data: any[]) => {
-        this.surveys = data.map((s) => ({
-          survey_id: s.surveyId || s.id,
-          title: s.title || s.name || s.titulo || 'Sin título',
-          created_at: s.createdAt ? s.createdAt.split('T')[0] : '',
-          close_date: s.closeDate || '',
-          status: Number(s.status) === 1 ? 'ACTIVA' : 'INACTIVA',
-        }));
+    this.encuestasService.listarEncuestas().subscribe({
+      next: (encuestas) => {
+        this.encuestas.set(encuestas);
+        this.seleccionarPrimera();
       },
-      error: (err) => {
-        console.error('Error al cargar encuestas para el Dashboard:', err);
-      },
+      error: (err) => this.errorMensaje.set(mensajeError(err, 'No pudimos cargar las encuestas.')),
     });
-  }
-
-  get filteredSurveys(): EncuestaDashboard[] {
-    if (!this.selectedDate) return this.surveys;
-    return this.surveys.filter((survey) => survey.created_at === this.selectedDate);
-  }
-
-  get activeQuestion(): Question | undefined {
-    return this.questions.find((q) => q.id === this.activeQuestionId);
   }
 
   selectQuestion(id: number): void {
-    this.activeQuestionId = id;
-  }
-
-  onDateChange(): void {
-    if (!this.filteredSurveys.some((survey) => String(survey.survey_id) === this.selectedSurvey)) {
-      this.selectedSurvey = '';
-      this.resetStats();
-    }
+    this.activeQuestionId.set(id);
   }
 
   onSurveyChange(id: string): void {
-    if (!id) {
-      this.resetStats();
-      return;
+    this.selectedSurvey.set(id);
+    this.cargarEstadisticas();
+  }
+
+  onEstadoChange(estado: string): void {
+    this.filtroEstado.set(estado);
+    if (!this.surveys().some((encuesta) => encuesta.id === this.selectedSurvey())) {
+      this.seleccionarPrimera();
     }
+  }
 
-    this.isLoading = true;
-    this.resetStats();
+  onFechaDesde(valor: string): void {
+    this.fechaDesde.set(valor);
+    this.cargarEstadisticas();
+  }
 
-    // Consumimos directamente el endpoint de estadísticas agregadas del backend
-    this.encuestasService.obtenerEstadisticas(id).subscribe({
-      next: (stats: EstadisticasEncuesta) => {
-        this.procesarEstadisticasBackend(stats);
-        this.isLoading = false;
+  onFechaHasta(valor: string): void {
+    this.fechaHasta.set(valor);
+    this.cargarEstadisticas();
+  }
+
+  private seleccionarPrimera(): void {
+    const primera = this.surveys()[0];
+    this.selectedSurvey.set(primera?.id ?? '');
+    if (primera) {
+      this.cargarEstadisticas();
+    } else {
+      this.estadisticas.set(null);
+    }
+  }
+
+  private cargarEstadisticas(): void {
+    const id = this.selectedSurvey();
+    if (!id) return;
+
+    this.errorMensaje.set(null);
+    this.cargando.set(true);
+    this.encuestasService.obtenerEstadisticas(id, { desde: this.fechaDesde(), hasta: this.fechaHasta() }).subscribe({
+      next: (estadisticas) => {
+        this.estadisticas.set(estadisticas);
+        this.activeQuestionId.set(1);
+        this.cargando.set(false);
       },
       error: (err) => {
-        console.error('Error cargando estadísticas del backend:', err);
-        // Respaldo en caso de fallo: intentar con resultados brutos
-        this.encuestasService.obtenerEncuestaParaResponder(id).subscribe({
-          next: (encuesta) => {
-            this.encuestasService.obtenerResultadosBrutos(id).subscribe({
-              next: (respuestas) => {
-                this.procesarEstadisticasBrutas(encuesta.preguntas, respuestas);
-                this.isLoading = false;
-              },
-              error: () => {
-                this.isLoading = false;
-                Swal.fire('Error', 'No se pudieron cargar los resultados de la encuesta.', 'error');
-              },
-            });
-          },
-          error: () => {
-            this.isLoading = false;
-            Swal.fire('Error', 'No se pudo cargar la estructura de la encuesta.', 'error');
-          },
-        });
+        this.errorMensaje.set(mensajeError(err, 'No pudimos cargar los resultados.'));
+        this.cargando.set(false);
       },
     });
   }
 
-  private resetStats(): void {
-    this.kpis = { totalRespuestas: 0, promedio: 0.0 };
-    this.questions = [];
-    this.activeQuestionId = -1;
-  }
-
-  /**
-   * Procesa las estadísticas entregadas por GET /surveys/:id/statistics
-   */
-  private procesarEstadisticasBackend(stats: EstadisticasEncuesta): void {
-    this.kpis.totalRespuestas = stats.totalSubmissions;
-    let sumTotalEscala = 0;
-    let countTotalEscala = 0;
-    const questionsList: Question[] = [];
-
-    (stats.questionsSummary || []).forEach((q) => {
-      const tipoNormalizado = (q.questionType || '').toLowerCase();
-      if (tipoNormalizado === 'abierta') return;
-
-      const bars: Bar[] = [];
-
-      if (tipoNormalizado === 'escala') {
-        let qSum = 0;
-        let qCount = 0;
-        const optionsCount = q.optionsCount || {};
-
-        [1, 2, 3, 4, 5].forEach((val) => {
-          const count = optionsCount[String(val)] || 0;
-          bars.push({
-            label: String(val),
-            value: count,
-            pct: q.totalAnswers > 0 ? (count / q.totalAnswers) * 100 : 0,
-            highlight: false,
-          });
-          qSum += val * count;
-          qCount += count;
-        });
-
-        const maxVal = Math.max(...bars.map((b) => b.value));
-        if (maxVal > 0) bars.forEach((b) => (b.highlight = b.value === maxVal));
-
-        const avg = qCount > 0 ? Number((qSum / qCount).toFixed(1)) : 0;
-        sumTotalEscala += qSum;
-        countTotalEscala += qCount;
-
-        questionsList.push({
-          id: q.questionId,
-          label: q.questionText,
-          tipo: 'ESCALA',
-          avg,
-          bars,
-        });
-      } else if (tipoNormalizado.includes('multiple')) {
-        const optionsCount = q.optionsCount || {};
-        const totalAnswers = q.totalAnswers || 1;
-
-        Object.keys(optionsCount).forEach((key) => {
-          const count = optionsCount[key];
-          bars.push({
-            label: key,
-            value: count,
-            pct: totalAnswers > 0 ? (count / totalAnswers) * 100 : 0,
-            highlight: false,
-          });
-        });
-
-        const maxVal = Math.max(...bars.map((b) => b.value));
-        if (maxVal > 0) bars.forEach((b) => (b.highlight = b.value === maxVal));
-
-        questionsList.push({
-          id: q.questionId,
-          label: q.questionText,
-          tipo: 'SELECCION_MULTIPLE',
-          avg: 0,
-          bars,
-        });
-      }
-    });
-
-    this.questions = questionsList;
-    this.activeQuestionId = questionsList.length > 0 ? questionsList[0].id : -1;
-    this.kpis.promedio = countTotalEscala > 0 ? Number((sumTotalEscala / countTotalEscala).toFixed(1)) : 0.0;
-  }
-
-  /**
-   * Fallback de cálculo en frontend si el endpoint directo no estuviera disponible
-   */
-  private procesarEstadisticasBrutas(preguntasDef: any[], respuestasBD: any[]): void {
-    this.kpis.totalRespuestas = respuestasBD.length;
-    let generalSum = 0;
-    let generalCount = 0;
-    const questionsList: Question[] = [];
-
-    preguntasDef.forEach((p) => {
-      if (p.tipo === 'ABIERTA' || p.tipo === 'Abierta') return;
-
-      let qSum = 0;
-      let qCount = 0;
-      const bars: Bar[] = [];
-
-      if (p.tipo === 'ESCALA' || p.tipo === 'Escala') {
-        const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-        const optionValMap: Record<number, number> = {};
-        (p.opciones || []).forEach((opt: any) => (optionValMap[Number(opt.id)] = Number(opt.texto)));
-
-        respuestasBD.forEach((r) => {
-          const detalle = (r.details || []).find((d: any) => Number(d.questionId) === Number(p.id));
-          if (detalle && detalle.optionId) {
-            const numValue = optionValMap[Number(detalle.optionId)];
-            if (numValue >= 1 && numValue <= 5) {
-              counts[numValue]++;
-              qSum += numValue;
-              qCount++;
-              generalSum += numValue;
-              generalCount++;
-            }
-          }
-        });
-
-        const avg = qCount > 0 ? qSum / qCount : 0;
-        [1, 2, 3, 4, 5].forEach((val) => {
-          bars.push({
-            label: String(val),
-            value: counts[val],
-            pct: qCount > 0 ? (counts[val] / qCount) * 100 : 0,
-            highlight: false,
-          });
-        });
-
-        const maxVal = Math.max(...bars.map((b) => b.value));
-        if (maxVal > 0) bars.forEach((b) => (b.highlight = b.value === maxVal));
-
-        questionsList.push({
-          id: Number(p.id),
-          label: p.texto || p.enunciado,
-          tipo: 'ESCALA',
-          avg: Number(avg.toFixed(1)),
-          bars,
-        });
-      } else if (p.tipo === 'SELECCION_MULTIPLE' || p.tipo === 'Seleccion Multiple') {
-        const counts: Record<string, number> = {};
-        const optionNameMap: Record<number, string> = {};
-
-        (p.opciones || []).forEach((opt: any) => {
-          counts[opt.texto] = 0;
-          optionNameMap[Number(opt.id)] = opt.texto;
-        });
-
-        respuestasBD.forEach((r) => {
-          (r.details || []).forEach((detalle: any) => {
-            if (Number(detalle.questionId) === Number(p.id) && detalle.optionId) {
-              const textValue = optionNameMap[Number(detalle.optionId)];
-              if (textValue !== undefined) {
-                counts[textValue] = (counts[textValue] || 0) + 1;
-                qCount++;
-              }
-            }
-          });
-        });
-
-        Object.keys(counts).forEach((key) => {
-          bars.push({
-            label: key,
-            value: counts[key],
-            pct: qCount > 0 ? (counts[key] / qCount) * 100 : 0,
-            highlight: false,
-          });
-        });
-
-        const maxVal = Math.max(...bars.map((b) => b.value));
-        if (maxVal > 0) bars.forEach((b) => (b.highlight = b.value === maxVal));
-
-        questionsList.push({
-          id: Number(p.id),
-          label: p.texto || p.enunciado,
-          tipo: 'SELECCION_MULTIPLE',
-          avg: 0,
-          bars,
-        });
-      }
-    });
-
-    this.questions = questionsList;
-    this.activeQuestionId = questionsList.length > 0 ? questionsList[0].id : -1;
-    this.kpis.promedio = generalCount > 0 ? Number((generalSum / generalCount).toFixed(1)) : 0;
+  private aBarras(conteos: Record<string, number>): Bar[] {
+    const opciones = Object.entries(conteos).sort(([a], [b]) => Number(a) - Number(b));
+    const maximo = Math.max(0, ...opciones.map(([, valor]) => valor));
+    return opciones.map(([opcion, valor]) => ({
+      label: opcion,
+      value: valor,
+      pct: maximo ? (valor / maximo) * 100 : 0,
+      highlight: valor > 0 && valor === maximo,
+    }));
   }
 }

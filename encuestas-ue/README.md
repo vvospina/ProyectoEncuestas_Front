@@ -34,7 +34,7 @@ La aplicación queda disponible en `http://localhost:4200/`. Para cambiar el pue
 npx ng serve --port 4300
 ```
 
-El backend se configura en `src/environment/environment.ts` y en `src/environment/environment.development.ts`, mediante `environment.apiUrl`.
+La configuración local no se sube a Git. Copia `src/environment/environment.example.ts` como `environment.ts` y como `environment.development.ts`, y completa `apiUrl` y las credenciales de Firebase del proyecto.
 
 ## Arquitectura y mapa de ubicación
 
@@ -100,7 +100,7 @@ La ruta raíz redirige a `/login`. Las rutas `/admin/**` y `/user/**` usan `AppL
 | --- | --- | --- |
 | `/login` | `LoginComponent` | Inicio de sesión por correo y contraseña |
 | `/register` | `RegisterComponent` | Registro con validación de contraseñas |
-| `/forgot-password` | `ForgotPasswordComponent` | Formulario de recuperación, actualmente pendiente de backend |
+| `/forgot-password` | `ForgotPasswordComponent` | Recuperación de contraseña con Firebase |
 | `/session-closed` | `SessionClosedComponent` | Pantalla posterior al cierre de sesión |
 
 ### Administrativas
@@ -156,43 +156,45 @@ Cada feature mantiene su template `.html`, estilos `.scss` y, en la mayoría de 
 
 ### `AuthService`
 
-`src/app/core/auth/auth.service.ts` es singleton (`providedIn: 'root'`) y concentra:
+`src/app/core/auth/auth.service.ts` es singleton (`providedIn: 'root'`) y concentra la sesión con **Firebase Authentication**:
 
-- Login: `POST /api/login` con `{ email, password }`.
-- Registro: `POST /api/register` con `{ name, email, password }`; el backend debe generar `password_hash` y asignar estado y rol.
-- Perfil: `PUT /api/profile` con nombre completo y `foto_perfil` en Base64.
-- Persistencia de sesión en `localStorage` bajo `token` y `user`.
-- Estado reactivo con Angular Signals: usuario, rol, errores, loading, foto y flags de operación.
-- Logout local y navegación a `/session-closed`.
+- Login con correo y contraseña o con Microsoft.
+- Registro con `name`, `email` y `password`.
+- Recuperación de contraseña por correo.
+- Rol del usuario: se lee de `GET /api/users/me` (`roleId` 1 es administrador).
+- Foto de perfil en Firestore.
+- Estado reactivo con Angular Signals.
 
-Login y registro usan exclusivamente `HttpClient` contra `environment.apiUrl`: `POST /login` y `POST /register` (por ejemplo, `http://localhost:3001/api/login`). Los payloads usan los nombres `email` y `name` del modelo relacional `users`; el backend es responsable de almacenar la contraseña como hash y de definir estado/rol. No hay inicialización ni imports de Firebase en la aplicación. `sendPasswordReset()` continúa como placeholder y no realiza una llamada al backend.
+El backend valida el token de Firebase en cada petición y crea al usuario como `STUDENT` en su primer ingreso.
 
 ### `EncuestasService`
 
-Usa `environment.apiUrl + '/surveys'` y expone:
+Usa `environment.apiUrl + '/surveys'`, traduce los campos entre la API y los modelos del front, y expone:
 
 | Método | HTTP | Endpoint | Uso |
 | --- | --- | --- | --- |
-| `obtenerEncuestasDisponibles` | GET | `/api/surveys` | Lista y mapea encuestas para estudiantes |
-| `obtenerTodasLasEncuestas` | GET | `/api/surveys` | Lista administrativa sin tipado de salida |
-| `obtenerEncuestaPorId` | GET | `/api/surveys/:id` | Detalle y preguntas |
-| `crearEncuesta` | POST | `/api/surveys` | Crea encuesta y preguntas |
-| `actualizarEncuesta` | PUT | `/api/surveys/:id` | Actualiza encuesta |
-| `publicarEncuesta` | PATCH | `/api/surveys/:id/publish` | Publica encuesta |
-| `desactivarEncuesta` | PATCH | `/api/surveys/:id/deactivate` | Desactiva encuesta |
-| `enviarRespuestas` | POST | `/api/surveys/:id/respuestas` | Guarda respuestas del estudiante |
-
-La lista de encuestas acepta filtros `busqueda` y `estado` como query params. `obtenerEncuestasDisponibles` tolera respuestas en arreglo directo o dentro de `data`, `encuestas` o `items`, y transforma estados del backend `Activa`/`Publicada` a `DISPONIBLE`.
+| `listarEncuestas` | GET | `/api/surveys?includeInactive=true` | Lista del administrador |
+| `listarEncuestasDisponibles` | GET | `/api/surveys` | Encuestas publicadas y vigentes |
+| `obtenerEncuestaPorId` | GET | `/api/surveys/:id` | Detalle con preguntas y opciones |
+| `crearEncuesta` | POST | `/api/surveys` | Crea un borrador con sus preguntas |
+| `guardarEdicion` | PUT, POST y DELETE | `/api/surveys`, `/api/questions`, `/api/options` | Edita un borrador |
+| `publicarEncuesta` | PATCH | `/api/surveys/:id/publish` | Publica un borrador |
+| `volverABorrador` | PATCH | `/api/surveys/:id/draft` | Devuelve a borrador si no tiene respuestas |
+| `desactivarEncuesta` | PATCH | `/api/surveys/:id/deactivate` | Baja lógica |
+| `reactivarEncuesta` | PATCH | `/api/surveys/:id/activate` | Reactiva como publicada |
+| `enviarRespuestas` | POST | `/api/surveys/:id/responses` | Guarda las respuestas de la sesión |
+| `obtenerEstadisticas` | GET | `/api/surveys/:id/statistics` | Métricas del dashboard |
+| `listarMisRespuestas` | GET | `/api/users/me/responses` | Respuestas del usuario |
 
 ### Guard e interceptor
 
-- `authGuard` espera `authReadyPromise`, permite acceso si existe `localStorage.token` y redirige a `/login` si no. `bypassAuthForDev` existe, pero está en `false`.
-- `authInterceptor` añade `Authorization: Bearer <token>` a las peticiones cuando existe un token REST guardado en `localStorage`.
-- `EncuestasService` también crea manualmente el mismo header en `getOptions()`. Conviene escoger un único mecanismo para evitar duplicación y divergencias futuras.
+- `authGuard` espera `authReadyPromise`, comprueba la sesión de Firebase y redirige a `/login`, recordando la página solicitada.
+- `adminGuard` protege `/admin` según el rol que informa el backend.
+- `authInterceptor` agrega el token de Firebase únicamente a las peticiones dirigidas a `environment.apiUrl`.
 
 ### Estado
 
-No hay NgRx ni un store externo. El estado se reparte entre Signals de `AuthService`, estado local de componentes y `localStorage`. Los formularios usan Reactive Forms; el dashboard y varios listados conservan datos mock en memoria.
+No hay NgRx ni un store externo. El estado se reparte entre Signals de `AuthService` y estado local de componentes. Los formularios usan Reactive Forms.
 
 ## Modelos y utilidades
 
@@ -235,14 +237,8 @@ Estado verificado:
 
 ## Observaciones técnicas prioritarias
 
-1. Corregir los imports y tipos de los cinco specs para que coincidan con las clases exportadas.
-2. Revisar los presupuestos de `angular.json` o reducir/optimizar la fuente externa para que `npm run build` pase en producción.
-3. Alinear el menú de `AppLayout` con las rutas reales (`/user/available-surveys`) y decidir si debe implementarse `/user/responses`.
-4. Añadir un guard de rol para `/admin/**`; `authGuard` solo verifica que exista un token.
-5. Sustituir mocks administrativos por servicios y contratos tipados cuando el backend exponga esos endpoints.
-6. Evitar `any` en respuestas HTTP, sesión y construcción de modelos; validar el contrato del backend y manejar errores de red con estados visibles.
-7. Mantener una estrategia consistente para el token REST entre `localStorage`, el interceptor y las llamadas protegidas; evitar la duplicación de headers manuales.
-8. Revisar el uso de `displayName` en perfil: `AuthService` guarda principalmente `nombre`, por lo que el perfil puede mostrar `(sin nombre)` aunque la sesión tenga datos.
+1. Revisar los presupuestos de `angular.json` o optimizar la fuente externa para que `npm run build` pase en producción.
+2. Evitar `any` restantes en componentes y sumar pruebas unitarias reales a los specs generados.
 
 ## Scripts npm
 

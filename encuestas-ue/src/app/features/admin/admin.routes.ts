@@ -16,10 +16,6 @@ export const ADMIN_ROUTES: Routes = [
       import('./dashboard/dashboard').then((m) => m.Dashboard),
   },
   {
-    path: 'surveys',
-    loadComponent: () => import('./surveys/surveys').then((m) => m.Surveys),
-  },
-  {
     path: 'surveys/create',
     loadComponent: () =>
       import('./surveys/create/create-survey').then(
@@ -29,14 +25,14 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'surveys/:id/edit',
     loadComponent: () =>
-      import('./surveys/create/create-survey').then((m) => m.CreateSurvey),
+      import('./surveys/create/create-survey').then(
+        (m) => m.CreateSurvey,
+      ),
   },
   {
-    path: 'surveys/:id/results/:studentId',
+    path: 'surveys/:id',
     loadComponent: () =>
-      import('../admin/surveys/results/student-answers/student-answers/student-answers').then(
-        (m) => m.StudentAnswers,
-      ),
+      import('./surveys/detail/survey-detail').then((m) => m.SurveyDetail),
   },
   {
     path: 'surveys/:id/results',
@@ -44,9 +40,14 @@ export const ADMIN_ROUTES: Routes = [
       import('../admin/surveys/results/survey-results/survey-results').then((m) => m.SurveyResults),
   },
   {
-    path: 'surveys/:id',
-    data: { mode: 'view' },
+    path: 'surveys/:id/results/:studentId',
     loadComponent: () =>
-      import('./surveys/create/create-survey').then((m) => m.CreateSurvey),
+    import('../admin/surveys/results/student-answers/student-answers/student-answers').then(
+        (m) => m.StudentAnswers,
+      ),
+  },
+  {
+    path: 'surveys',
+    loadComponent: () => import('./surveys/surveys').then((m) => m.Surveys),
   },
 ];

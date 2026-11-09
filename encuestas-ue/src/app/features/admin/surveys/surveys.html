@@ -20,6 +20,10 @@
 
   <main class="surveys-content">
 
+    @if (errorMensaje()) {
+      <div class="alert alert-danger" role="alert">{{ errorMensaje() }}</div>
+    }
+
     <section class="filters-card">
 
       <div class="date-field">
@@ -117,14 +121,15 @@
           <div class="survey-meta">
 
             <span>
-              <i class="bi bi-person"></i>
-              {{ survey.teacher }}
-            </span>
-
-            <span>
               <i class="bi bi-list-check"></i>
               {{ survey.questions }}
               {{ survey.questions === 1 ? 'pregunta' : 'preguntas' }}
+            </span>
+
+            <span>
+              <i class="bi bi-chat-left-text"></i>
+              {{ survey.responses }}
+              {{ survey.responses === 1 ? 'respuesta' : 'respuestas' }}
             </span>
 
             <span>
@@ -144,10 +149,17 @@
             <span>Ver</span>
           </a>
 
-          <a [routerLink]="['/admin/surveys', survey.id, 'edit']" class="action-button">
-            <i class="bi bi-pencil"></i>
-            <span>Editar</span>
-          </a>
+          @if (survey.status === 'BORRADOR') {
+            <a [routerLink]="['/admin/surveys', survey.id, 'edit']" class="action-button">
+              <i class="bi bi-pencil"></i>
+              <span>Editar</span>
+            </a>
+          } @else {
+            <button type="button" class="action-button" disabled title="Solo se editan borradores">
+              <i class="bi bi-pencil"></i>
+              <span>Editar</span>
+            </button>
+          }
 
           <a [routerLink]="['/admin/surveys', survey.id, 'results']" class="action-button">
             <i class="bi bi-bar-chart"></i>
@@ -159,15 +171,29 @@
             <span>Generar código QR</span>
           </button>
 
-          @if (survey.status === 'PUBLICADA') {
-            <button type="button" class="action-button action-button--danger" (click)="cambiarEstado(survey)" title="Desactivar encuesta">
-              <i class="bi bi-pause-circle"></i>
-              <span>Desactivar</span>
+          @if (survey.status === 'BORRADOR') {
+            <button type="button" class="action-button action-button--success" (click)="publicar(survey)" title="Publicar encuesta">
+              <i class="bi bi-send"></i>
+              <span>Publicar</span>
+            </button>
+          }
+
+          @if (survey.status === 'PUBLICADA' && survey.responses === 0) {
+            <button type="button" class="action-button" (click)="volverABorrador(survey)" title="Volver a borrador">
+              <i class="bi bi-arrow-return-left"></i>
+              <span>Volver a borrador</span>
+            </button>
+          }
+
+          @if (survey.status === 'INACTIVA') {
+            <button type="button" class="action-button action-button--success" (click)="reactivar(survey)" title="Reactivar encuesta">
+              <i class="bi bi-play-circle"></i>
+              <span>Reactivar</span>
             </button>
           } @else {
-            <button type="button" class="action-button action-button--success" (click)="cambiarEstado(survey)" title="Activar encuesta">
-              <i class="bi bi-play-circle"></i>
-              <span>Activar</span>
+            <button type="button" class="action-button action-button--danger" (click)="inactivar(survey)" title="Inactivar encuesta">
+              <i class="bi bi-pause-circle"></i>
+              <span>Inactivar</span>
             </button>
           }
 

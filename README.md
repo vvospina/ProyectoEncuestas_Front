@@ -64,8 +64,8 @@ src/app/
 Estos archivos NO vienen en el repositorio (contienen llaves reales de Firebase):
 
 ```bash
-cp src/environments/environment.example.ts src/environments/environment.ts               # apunta a un backend local (http://localhost:3000/api) y a un proyecto de Firebase de pruebas.
-cp src/environments/environment.example.ts src/environments/environment.development.ts   # apunta al backend ya desplegado y al proyecto de Firebase real.
+cp encuestas-ue/src/environment/environment.example.ts encuestas-ue/src/environment/environment.ts               # apunta a un backend local (http://localhost:3000/api) y a un proyecto de Firebase de pruebas.
+cp encuestas-ue/src/environment/environment.example.ts encuestas-ue/src/environment/environment.development.ts   # apunta al backend ya desplegado y al proyecto de Firebase real.
 ```
 
 Pedir las llaves reales de Firebase y pegarlas en esos dos archivos (o encontrarlas en el grupo de whatsapp).

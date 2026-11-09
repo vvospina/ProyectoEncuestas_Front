@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard } from './core/auth/auth.guard';
+import { adminGuard, authGuard } from './core/auth/auth.guard';
 import { AppLayout } from './shared/layout/app-layout/app-layout';
 
 export const routes: Routes = [
-  {
+{
     path: '',
     pathMatch: 'full',
     redirectTo: 'login',
@@ -37,15 +37,6 @@ export const routes: Routes = [
       ),
   },
 
-
-  {
-    path: 'reset-password',
-    loadComponent: () =>
-      import('./features/auth/reset-password/reset-password').then(
-        (m) => m.ResetPasswordComponent,
-      ),
-  },
-
   {
     path: 'admin',
     component: AppLayout,
@@ -76,9 +67,8 @@ export const routes: Routes = [
     ],
   },
 
-
   {
     path: '**',
     redirectTo: 'login',
-  }
+  },
 ];
