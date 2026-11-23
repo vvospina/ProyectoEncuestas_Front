@@ -2,7 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { Encuesta } from '../../../shared/models/encuesta.models';
-import { Pregunta } from '../../../shared/models/pregunta.model';
+import { OpcionPregunta, Pregunta } from '../../../shared/models/pregunta.model';
 import { DetalleRespuesta, EncuestasService, mensajeError } from '../../../core/services/encuestas.service';
 
 @Component({
@@ -25,6 +25,8 @@ export class SurveysComponent implements OnInit {
   private readonly opcionesElegidas = signal<Record<string, number[]>>({});
   /** Texto escrito por pregunta (respuesta abierta). */
   private readonly textos = signal<Record<string, string>>({});
+    /** Estrella sobre la que está el mouse (para la vista previa al pasar el cursor). */
+  private readonly estrellaHover = signal<{ preguntaId: string; valor: number } | null>(null);
 
   preguntas = computed<Pregunta[]>(() => (this.encuesta()?.preguntas ?? []).filter((p) => p.estado === 'ACTIVA'));
   preguntaActual = computed<Pregunta | null>(() => this.preguntas()[this.indicePreguntaActual()] ?? null);
@@ -64,6 +66,28 @@ export class SurveysComponent implements OnInit {
 
   textoDe(preguntaId: string): string {
     return this.textos()[preguntaId] ?? '';
+  }
+
+    /** Valor (1 a 5) de la opción que el usuario eligió; 0 si no ha elegido ninguna. */
+  private valorElegidoEscala(pregunta: Pregunta): number {
+    const opcionId = (this.opcionesElegidas()[pregunta.id] ?? [])[0];
+    const opcion = pregunta.opciones?.find((o) => o.id === opcionId);
+    return opcion ? Number(opcion.texto) : 0;
+  }
+
+  /** Una estrella se pinta si su valor es menor o igual al elegido (o al que está en hover). */
+  estrellaLlena(pregunta: Pregunta, opcion: OpcionPregunta): boolean {
+    const hover = this.estrellaHover();
+    const referencia = hover?.preguntaId === pregunta.id ? hover.valor : this.valorElegidoEscala(pregunta);
+    return Number(opcion.texto) <= referencia;
+  }
+
+  previsualizarEstrella(pregunta: Pregunta, opcion: OpcionPregunta): void {
+    this.estrellaHover.set({ preguntaId: pregunta.id, valor: Number(opcion.texto) });
+  }
+
+  quitarPrevisualizacion(): void {
+    this.estrellaHover.set(null);
   }
 
   /** En escala solo se elige una opción; en selección múltiple se pueden marcar varias. */
