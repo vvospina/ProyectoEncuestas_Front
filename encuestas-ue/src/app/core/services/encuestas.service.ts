@@ -8,6 +8,7 @@ import { environment } from '../../../environment/environment';
 import { Pregunta, TipoPregunta } from '../../shared/models/pregunta.model';
 import { EstudianteEncuestado } from '../../shared/models/estudiante-encuestado.model';
 import { RespuestaPregunta } from '../../shared/models/respuesta-pregunta.model';
+import type { DashboardEstudiante, EstudianteDashboard } from '../../shared/models/dashboard-estudiante.model';
 
 export interface CrearEncuestaPayload {
   titulo: string;
@@ -261,6 +262,16 @@ export class EncuestasService {
     if (filtros?.hasta) params = params.set('to', new Date(`${filtros.hasta}T23:59:59.999`).toISOString());
 
     return this.http.get<EstadisticasEncuesta>(`${this.apiUrl}/${encuestaId}/statistics`, { params });
+  }
+
+  /** Lista estudiantes activos para el dashboard administrativo. */
+  listarEstudiantesActivos(): Observable<EstudianteDashboard[]> {
+    return this.http.get<EstudianteDashboard[]>(`${environment.apiUrl}/users/students`);
+  }
+
+  /** Consulta respuestas y pendientes de un estudiante específico. */
+  obtenerDashboardEstudiante(estudianteId: number): Observable<DashboardEstudiante> {
+    return this.http.get<DashboardEstudiante>(`${environment.apiUrl}/students/${estudianteId}/dashboard`);
   }
 
   /** Encuestas que respondió el usuario de la sesión. */

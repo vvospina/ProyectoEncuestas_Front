@@ -16,6 +16,11 @@ export const ADMIN_ROUTES: Routes = [
       import('./dashboard/dashboard').then((m) => m.Dashboard),
   },
   {
+    path: 'student-dashboard',
+    loadComponent: () =>
+      import('./student-dashboard/student-dashboard').then((m) => m.StudentDashboard),
+  },
+  {
     path: 'surveys/create',
     loadComponent: () =>
       import('./surveys/create/create-survey').then(

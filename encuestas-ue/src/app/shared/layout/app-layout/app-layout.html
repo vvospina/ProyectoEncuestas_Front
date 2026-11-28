@@ -42,6 +42,14 @@
 
       </a>
 
+      <a routerLink="/admin/student-dashboard" routerLinkActive="nav-item--active"
+        [routerLinkActiveOptions]="{ exact: true }" class="nav-item" (click)="closeSidebar()">
+
+        <span class="nav-item__icon material-symbols-outlined">person_search</span>
+        <span>Por estudiante</span>
+
+      </a>
+
       <a routerLink="/admin/surveys" routerLinkActive="nav-item--active" [routerLinkActiveOptions]="{ exact: true }"
         class="nav-item" (click)="closeSidebar()">
 

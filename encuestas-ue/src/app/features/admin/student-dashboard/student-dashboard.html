@@ -1,0 +1,161 @@
+<div class="student-dashboard-page container-fluid">
+  <header class="page-header mb-4">
+    <div>
+      <span class="small fw-bold text-primary text-uppercase">Análisis individual</span>
+      <h1 class="h2 fw-bold mt-1">Estadísticas por persona</h1>
+      <p class="text-secondary mb-0">Consulta las encuestas respondidas, pendientes y las respuestas de cada persona.</p>
+    </div>
+  </header>
+
+  @if (errorMensaje()) {
+    <div class="alert alert-danger" role="alert">{{ errorMensaje() }}</div>
+  }
+
+  <section class="student-picker card shadow-sm p-3 p-md-4" aria-labelledby="student-picker-title">
+    <div class="student-picker__heading d-flex align-items-start justify-content-between gap-3 mb-3">
+      <div>
+        <h2 id="student-picker-title" class="h6 fw-bold mb-1">Seleccionar persona</h2>
+        <p class="small text-secondary mb-0">Busca por nombre o correo electrónico.</p>
+      </div>
+      <span class="student-picker__count badge text-bg-light">
+        {{ estudiantes().length }} {{ estudiantes().length === 1 ? 'persona activa' : 'personas activas' }}
+      </span>
+    </div>
+
+    <label for="student-search" class="form-label">Persona</label>
+    <input
+      id="student-search"
+      type="search"
+      class="form-control"
+      placeholder="Nombre o correo"
+      [value]="terminoBusqueda()"
+      (input)="buscarEstudiante($event)"
+      autocomplete="off"
+      aria-controls="student-options"
+    />
+
+    @if (cargandoEstudiantes()) {
+      <p class="status-message text-center text-secondary p-3" role="status">Cargando personas…</p>
+    } @else if (estudiantes().length === 0) {
+      <p class="status-message text-center text-secondary p-3">No hay personas activas para mostrar.</p>
+    } @else if (estudiantesFiltrados().length > 0) {
+      <ul id="student-options" class="student-options row g-2">
+        @for (estudiante of estudiantesFiltrados(); track estudiante.id) {
+          <li class="col-12 col-md-6">
+            <button
+              type="button"
+              class="student-option d-flex align-items-center gap-3 w-100 p-3 rounded bg-white text-start"
+              [class.student-option--selected]="estudianteSeleccionado()?.id === estudiante.id"
+              (click)="seleccionarEstudiante(estudiante)"
+            >
+              <span class="student-option__avatar d-flex align-items-center justify-content-center rounded-circle bg-light text-secondary flex-shrink-0" aria-hidden="true">
+                <i class="bi bi-person"></i>
+              </span>
+              <span class="student-option__info text-truncate">
+                <strong class="d-block text-truncate">{{ estudiante.name }}</strong>
+                <small class="d-block text-truncate text-secondary">{{ estudiante.email }}</small>
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+      @if (estudiantes().length > estudiantesFiltrados().length) {
+        <p class="student-picker__hint small text-secondary mt-2 mb-0">Escribe para acotar la búsqueda; se muestran hasta 10 coincidencias.</p>
+      }
+    } @else {
+      <p class="status-message text-center text-secondary p-3">No hay coincidencias para la búsqueda.</p>
+    }
+  </section>
+
+  @if (estudianteSeleccionado(); as estudiante) {
+    <header class="student-heading d-flex align-items-center gap-3 mt-4 mb-3">
+      <div class="student-heading__avatar d-flex align-items-center justify-content-center rounded-circle bg-light text-secondary flex-shrink-0" aria-hidden="true">
+        <i class="bi bi-person"></i>
+      </div>
+      <div>
+        <h2 class="h5 fw-bold mb-1">{{ estudiante.name }}</h2>
+        <p class="text-secondary mb-0">{{ estudiante.email }}</p>
+      </div>
+    </header>
+
+    @if (cargandoDashboard()) {
+      <p class="status-message text-center text-secondary p-3" role="status">Cargando las estadísticas de la persona…</p>
+    } @else if (dashboard(); as datos) {
+      <section class="summary-grid row g-3 mb-4" aria-label="Resumen de encuestas">
+        <article class="col-12 col-sm-6">
+          <div class="summary-card card shadow-sm h-100 p-3">
+            <span class="small fw-semibold text-secondary">Encuestas respondidas</span>
+            <strong class="h3 mb-0">{{ datos.answeredSurveys.length }}</strong>
+          </div>
+        </article>
+        <article class="col-12 col-sm-6">
+          <div class="summary-card card shadow-sm h-100 p-3">
+            <span class="small fw-semibold text-secondary">Encuestas pendientes</span>
+            <strong class="h3 mb-0">{{ datos.pendingSurveys.length }}</strong>
+          </div>
+        </article>
+      </section>
+
+      <section class="survey-section mt-4" aria-labelledby="answered-title">
+        <div class="section-heading d-flex align-items-center justify-content-between mb-3">
+          <h2 id="answered-title" class="h5 fw-bold mb-0">Respondidas</h2>
+          <span class="small text-secondary">{{ datos.answeredSurveys.length }}</span>
+        </div>
+
+        @if (datos.answeredSurveys.length > 0) {
+          <div class="survey-list d-grid gap-3">
+            @for (encuesta of datos.answeredSurveys; track encuesta.surveyId) {
+              <article class="survey-card card shadow-sm p-3">
+                <header class="survey-card__header d-flex align-items-start justify-content-between gap-3 mb-3">
+                  <h3 class="h6 fw-bold mb-0">{{ encuesta.surveyTitle }}</h3>
+                  <time class="small text-secondary text-nowrap" [attr.datetime]="encuesta.submittedAt">{{ formatDate(encuesta.submittedAt) }}</time>
+                </header>
+                <dl class="answer-list mb-0">
+                  @for (detalle of encuesta.details; track $index) {
+                    <div class="answer-item border-top pt-2">
+                      <dt class="small fw-semibold text-secondary">{{ detalle.questionText }}</dt>
+                      <dd class="mb-0 mt-1">{{ detalle.answer }}</dd>
+                    </div>
+                  }
+                </dl>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="empty-state text-center text-secondary p-3 border rounded">Esta persona todavía no ha respondido encuestas.</p>
+        }
+      </section>
+
+      <section class="survey-section mt-4" aria-labelledby="pending-title">
+        <div class="section-heading d-flex align-items-center justify-content-between mb-3">
+          <h2 id="pending-title" class="h5 fw-bold mb-0">Pendientes</h2>
+          <span class="small text-secondary">{{ datos.pendingSurveys.length }}</span>
+        </div>
+
+        @if (datos.pendingSurveys.length > 0) {
+          <div class="survey-list d-grid gap-3">
+            @for (encuesta of datos.pendingSurveys; track encuesta.surveyId) {
+              <article class="pending-card card shadow-sm d-flex flex-row align-items-center justify-content-between gap-3 p-3">
+                <div>
+                  <h3 class="h6 fw-bold mb-1">{{ encuesta.title }}</h3>
+                  <p class="small text-secondary mb-0">
+                    @if (encuesta.closeDate) {
+                      Cierra el {{ formatDate(encuesta.closeDate) }}
+                    } @else {
+                      Sin fecha de cierre
+                    }
+                  </p>
+                </div>
+                <span class="pending-badge badge rounded-pill text-bg-warning">Pendiente</span>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="empty-state text-center text-secondary p-3 border rounded">No tiene encuestas publicadas vigentes pendientes.</p>
+        }
+      </section>
+    }
+  } @else {
+    <p class="selection-hint text-center text-secondary p-3">Selecciona una persona para consultar sus estadísticas.</p>
+  }
+</div>

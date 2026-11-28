@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+.student-dashboard-page {
+  max-width: 1100px;
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+}
+
+.student-option {
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.student-option:hover,
+.student-option--selected {
+  border-color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 5%, white);
+}
+
+.student-option__avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.student-option__info {
+  min-width: 0;
+}
+
+.student-heading__avatar {
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.2rem;
+}
+
+.answer-item dd {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 575.98px) {
+  .student-dashboard-page {
+    padding-top: 1.25rem;
+  }
+
+  .pending-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
